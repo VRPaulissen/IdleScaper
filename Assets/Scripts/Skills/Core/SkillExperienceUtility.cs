@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace IdleScaper.Scripts.Skills.Core
+namespace IdleScaper.Skills.Core
 {
     /// <summary>
     /// Provides XP calculation utilities for skills.

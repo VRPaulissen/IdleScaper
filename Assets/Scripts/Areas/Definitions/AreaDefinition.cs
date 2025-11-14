@@ -1,7 +1,7 @@
-using IdleScaper.Scripts.Areas.Core;
+using IdleScaper.Areas.Core;
 using UnityEngine;
 
-namespace IdleScaper.Scripts.Areas.Definitions
+namespace IdleScaper.Areas.Definitions
 {
     /// <summary>
     /// Defines an area configuration.

@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-namespace IdleScaper.Scripts
+namespace IdleScaper
 {
     /// <summary>
     /// Provides a customizable logging utility.  Each log’s “title” is either:

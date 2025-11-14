@@ -1,6 +1,6 @@
-using IdleScaper.Scripts.Items.Definitions;
+using IdleScaper.Items.Definitions;
 
-namespace IdleScaper.Scripts.Skills.Actions
+namespace IdleScaper.Skills.Actions
 {
     /// <summary>
     /// Defines a required tool for performing an action.

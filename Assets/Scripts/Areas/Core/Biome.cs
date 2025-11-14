@@ -1,4 +1,4 @@
-namespace IdleScaper.Scripts.Areas.Core
+namespace IdleScaper.Areas.Core
 {
     /// <summary>
     /// Biome theme for an area.

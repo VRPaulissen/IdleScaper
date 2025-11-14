@@ -1,11 +1,11 @@
 using System.Collections;
-using IdleScaper.Scripts.Items;
-using IdleScaper.Scripts.Skills.Actions;
-using IdleScaper.Scripts.Skills.Core;
-using Scripts.Skills.Definitions.Woodcutting;
+using IdleScaper.Areas;
+using IdleScaper.Items;
+using IdleScaper.Skills.Actions;
+using IdleScaper.Skills.Core;
 using UnityEngine;
 
-namespace IdleScaper.Scripts.Areas
+namespace IdleScaper.Player
 {
     /// <summary>
     /// Controls player movement to a spot and runs AFK actions there.
@@ -14,20 +14,22 @@ namespace IdleScaper.Scripts.Areas
     {
         [Header("References")]
         [SerializeField] private PlayerSkills playerSkills;
+        [SerializeField] private PlayerMover playerMover;
         [SerializeField] private Inventory inventory;
-
+        
         [Header("Config")]
         [SerializeField] private float interactRange = 1.5f;
         [SerializeField] private float actionInterval = 2f;
 
         private AreaSpotInstance currentSpot;
         private Coroutine afkRoutine;
-
-        private WoodcuttingActionProcessor woodcuttingProcessor;
+        private GatheringActionProcessor gatheringProcessor;
 
         private void Awake()
         {
-            woodcuttingProcessor = new WoodcuttingActionProcessor(playerSkills, inventory);
+            if (playerMover == null) playerMover = GetComponent<PlayerMover>();
+            
+            gatheringProcessor = new GatheringActionProcessor(playerSkills, inventory);
         }
 
         /// <summary>
@@ -41,16 +43,36 @@ namespace IdleScaper.Scripts.Areas
             if (currentSpot == null)
                 return;
 
-            // TODO: plug into movement system. For now, teleport:
-            transform.position = currentSpot.transform.position;
+            playerMover.MoveTo(currentSpot.transform.position);
 
-            StartAfk();
+            // Option 1: simple polling to start AFK when close:
+            if (afkRoutine != null)
+                StopCoroutine(afkRoutine);
+            afkRoutine = StartCoroutine(AfkWhenInRange());
+        }
+
+        private IEnumerator AfkWhenInRange()
+        {
+            var wait = new WaitForSeconds(0.1f);
+            while (currentSpot != null)
+            {
+                if (Vector3.Distance(transform.position, currentSpot.transform.position) <= interactRange)
+                {
+                    StartAfk();
+                    yield break;
+                }
+
+                yield return wait;
+            }
         }
 
         private void StartAfk()
         {
             if (currentSpot == null)
                 return;
+
+            if (afkRoutine != null)
+                StopCoroutine(afkRoutine);
 
             afkRoutine = StartCoroutine(AfkLoop());
         }
@@ -63,30 +85,18 @@ namespace IdleScaper.Scripts.Areas
             afkRoutine = null;
         }
 
-        /// <summary>
-        /// Repeatedly executes the action at the current spot while valid.
-        /// </summary>
         private IEnumerator AfkLoop()
         {
             var wait = new WaitForSeconds(actionInterval);
 
             while (currentSpot != null)
             {
-                var action = currentSpot.Action;
-                if (action == null)
-                {
-                    currentSpot = null;
-                    yield break;
-                }
-
-                // Ensure we are still in range.
                 if (Vector3.Distance(transform.position, currentSpot.transform.position) > interactRange)
-                {
-                    currentSpot = null;
                     yield break;
-                }
 
-                ExecuteAction(action);
+                var action = currentSpot.Action as GatheringActionDefinition;
+                if (action != null)
+                    ExecuteAction(action);
 
                 yield return wait;
             }
@@ -99,8 +109,8 @@ namespace IdleScaper.Scripts.Areas
         {
             switch (action)
             {
-                case WoodcuttingActionDefinition woodcutting:
-                    woodcuttingProcessor.TryExecute(woodcutting);
+                case GatheringActionDefinition woodcutting:
+                    gatheringProcessor.TryExecute(woodcutting);
                     break;
             }
         }

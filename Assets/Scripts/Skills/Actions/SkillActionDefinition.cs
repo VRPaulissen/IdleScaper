@@ -1,8 +1,7 @@
-using IdleScaper.Scripts.Items.Definitions;
-using IdleScaper.Scripts.Skills.Core;
+using IdleScaper.Skills.Core;
 using UnityEngine;
 
-namespace IdleScaper.Scripts.Skills.Actions
+namespace IdleScaper.Skills.Actions
 {
     /// <summary>
     /// Base definition for a skill-related action.

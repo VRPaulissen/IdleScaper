@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using IdleScaper.Scripts.Skills.Core;
-using Scripts.Skills.Definitions;
+using IdleScaper.Skills.Core;
+using IdleScaper.Skills.Definitions;
 using UnityEngine;
 
-namespace IdleScaper.Scripts.Skills.Services
+namespace IdleScaper.Skills.Services
 {
     /// <summary>
     /// Tracks which skill unlocks are available for a player.

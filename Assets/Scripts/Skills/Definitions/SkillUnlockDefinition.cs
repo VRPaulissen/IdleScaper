@@ -1,7 +1,7 @@
-using IdleScaper.Scripts.Skills.Core;
+using IdleScaper.Skills.Core;
 using UnityEngine;
 
-namespace Scripts.Skills.Definitions
+namespace IdleScaper.Skills.Definitions
 {
     /// <summary>
     /// Types of content that can be unlocked by a skill.

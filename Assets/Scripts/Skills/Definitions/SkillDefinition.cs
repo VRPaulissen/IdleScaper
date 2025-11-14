@@ -1,8 +1,7 @@
-using IdleScaper.Script.Skills.Core;
-using IdleScaper.Scripts.Skills.Core;
+using IdleScaper.Skills.Core;
 using UnityEngine;
 
-namespace Scripts.Skills.Definitions
+namespace IdleScaper.Skills.Definitions
 {
     /// <summary>
     /// Defines static data and progression for a skill.

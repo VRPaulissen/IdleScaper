@@ -1,4 +1,4 @@
-namespace IdleScaper.Scripts.Skills.Core
+namespace IdleScaper.Skills.Core
 {
     /// <summary>
     /// Groups skills by gameplay category.

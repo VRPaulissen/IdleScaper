@@ -1,4 +1,4 @@
-namespace IdleScaper.Script.Skills.Core
+namespace IdleScaper
 {
     // Skills
     public class SkillConstants

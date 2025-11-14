@@ -1,8 +1,6 @@
 ﻿using UnityEngine;
-using System.Collections;
 
-
-namespace TMPro.Examples
+namespace IdleScaper.TextMesh_Pro.Examples___Extras.Scripts
 {
 
     public class ObjectSpin : MonoBehaviour

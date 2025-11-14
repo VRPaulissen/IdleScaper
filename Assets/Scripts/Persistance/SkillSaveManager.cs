@@ -1,8 +1,8 @@
 using System.IO;
-using IdleScaper.Scripts.Skills.Core;
+using IdleScaper.Skills.Core;
 using UnityEngine;
 
-namespace IdleScaper
+namespace IdleScaper.Persistance
 {
   /// <summary>
     /// Handles saving and loading player skill data to a JSON file.

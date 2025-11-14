@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using IdleScaper.Scripts.Skills.Core;
+using IdleScaper.Skills.Core;
 
-namespace IdleScaper
+namespace IdleScaper.Persistance
 {
     /// <summary>
     /// Serializable container for all skill-related save data.

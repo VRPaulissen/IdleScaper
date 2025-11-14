@@ -1,20 +1,20 @@
 using System.Collections.Generic;
-using IdleScaper.Scripts.Items.Definitions;
-using IdleScaper.Scripts.Skills.Actions;
+using IdleScaper.Items.Definitions;
 using UnityEngine;
 
-namespace Scripts.Skills.Definitions.Woodcutting
+namespace IdleScaper.Skills.Actions
 {
-     /// <summary>
-    /// Defines a woodcutting action with weighted rewards.
+    /// <summary>
+    /// Defines a generic gathering action with weighted rewards.
+    /// Works for woodcutting, mining, foraging, fishing, etc.
     /// </summary>
-    [CreateAssetMenu(menuName = "IdleScaper/Actions/Woodcutting Action")]
-    public class WoodcuttingActionDefinition : SkillActionDefinition
+    [CreateAssetMenu(menuName = "IdleScaper/Actions/Gathering Action")]
+    public class GatheringActionDefinition : SkillActionDefinition
     {
         /// <summary>Possible rewards granted when this action succeeds.</summary>
         public GatheringRewardEntry[] Rewards;
 
-        /// <summary>Base time in seconds per chop attempt.</summary>
+        /// <summary>Base time in seconds per attempt.</summary>
         public float ActionTime = 3f;
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace Scripts.Skills.Definitions.Woodcutting
                 if (entry.Item == null || entry.Weight <= 0f)
                     continue;
 
-                // Roll based on weight treated as chance per action (0-1) or relative weight.
+                // If Weight <= 1: treat as direct chance.
                 if (entry.Weight <= 1f)
                 {
                     if (Random.value <= entry.Weight)
@@ -42,15 +42,12 @@ namespace Scripts.Skills.Definitions.Woodcutting
                             buffer.Add((entry.Item, amount));
                     }
                 }
-                else
+                // If Weight > 1: use WeightSumHint as a crude relative weight pool.
+                else if (entry.WeightSumHint > 0f && Random.Range(0f, entry.WeightSumHint) < entry.Weight)
                 {
-                    // Relative weight: normalize via random range.
-                    if (Random.Range(0f, entry.WeightSumHint) < entry.Weight)
-                    {
-                        var amount = Random.Range(entry.MinAmount, entry.MaxAmount + 1);
-                        if (amount > 0)
-                            buffer.Add((entry.Item, amount));
-                    }
+                    var amount = Random.Range(entry.MinAmount, entry.MaxAmount + 1);
+                    if (amount > 0)
+                        buffer.Add((entry.Item, amount));
                 }
             }
         }

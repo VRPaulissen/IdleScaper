@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using IdleScaper.Scripts.Items.Definitions;
+using IdleScaper.Items.Definitions;
 using UnityEngine;
 
-namespace IdleScaper.Scripts.Items
+namespace IdleScaper.Items
 {
     /// <summary>
     /// Simple inventory that stores item quantities.

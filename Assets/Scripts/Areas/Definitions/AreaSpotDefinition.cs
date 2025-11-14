@@ -1,7 +1,7 @@
-using IdleScaper.Scripts.Skills.Actions;
+using IdleScaper.Skills.Actions;
 using UnityEngine;
 
-namespace IdleScaper.Scripts.Areas.Definitions
+namespace IdleScaper.Areas.Definitions
 {
     /// <summary>
     /// Describes a type of spot that can appear in an idle area.

@@ -1,8 +1,8 @@
 using System;
-using IdleScaper.Scripts.Skills.Core;
+using IdleScaper.Skills.Core;
 using UnityEngine;
 
-namespace IdleScaper.Scripts.Skills
+namespace IdleScaper.Skills
 {
     /// <summary>
     /// Simple on-screen UI for debugging skill experience and unlocks.
@@ -23,12 +23,6 @@ namespace IdleScaper.Scripts.Skills
 
         private Rect windowRect = new Rect(10, 10, 480, 860);
         private Vector2 scrollPos;
-
-        private void Awake()
-        {
-            if (playerSkills == null)
-                playerSkills = FindObjectOfType<PlayerSkills>();
-        }
 
         /// <summary>
         /// Toggles visibility from code if needed.

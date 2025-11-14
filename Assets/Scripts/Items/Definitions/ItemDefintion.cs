@@ -1,7 +1,6 @@
-using IdleScaper.Script.Skills.Core;
 using UnityEngine;
 
-namespace IdleScaper.Scripts.Items.Definitions
+namespace IdleScaper.Items.Definitions
 {
     /// <summary>
     /// Defines a generic in-game item such as tools, materials, or resources.

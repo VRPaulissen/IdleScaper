@@ -1,7 +1,7 @@
 using System;
-using Scripts.Skills.Definitions;
+using IdleScaper.Skills.Definitions;
 
-namespace IdleScaper.Scripts.Skills.Core
+namespace IdleScaper.Skills.Core
 {
     /// <summary>
     /// Holds runtime XP and level for a single skill.

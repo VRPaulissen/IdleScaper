@@ -1,7 +1,8 @@
-using IdleScaper.Scripts.Skills.Actions;
+using IdleScaper.Player;
+using IdleScaper.Skills.Actions;
 using UnityEngine;
 
-namespace IdleScaper.Scripts.Areas
+namespace IdleScaper.Areas
 {
     /// <summary>
     /// Represents a single interactive spot in an idle area.

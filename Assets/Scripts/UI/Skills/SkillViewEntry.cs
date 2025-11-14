@@ -1,8 +1,8 @@
-using IdleScaper.Scripts.Skills.Core;
+using IdleScaper.Skills.Core;
 using TMPro;
 using UnityEngine;
 
-namespace IdleScaper.Scripts.UI.Skills
+namespace IdleScaper.UI.Skills
 {
     /// <summary>
     /// Displays a single skill's level and experience.

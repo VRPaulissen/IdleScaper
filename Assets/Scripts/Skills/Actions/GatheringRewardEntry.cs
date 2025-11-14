@@ -1,7 +1,7 @@
-using IdleScaper.Scripts.Items.Definitions;
+using IdleScaper.Items.Definitions;
 using UnityEngine;
 
-namespace IdleScaper.Scripts.Skills.Actions
+namespace IdleScaper.Skills.Actions
 {
     /// <summary>
     /// Defines a possible reward for a woodcutting action.

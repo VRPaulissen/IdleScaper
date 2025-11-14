@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Scripts.Skills.Definitions;
+using IdleScaper.Persistance;
+using IdleScaper.Skills.Definitions;
 using UnityEngine;
 
-namespace IdleScaper.Scripts.Skills.Core
+namespace IdleScaper.Skills.Core
 {
     /// <summary>
     /// Manages all skill states and XP for a player.

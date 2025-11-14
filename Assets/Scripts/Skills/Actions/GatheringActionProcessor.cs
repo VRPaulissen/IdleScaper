@@ -1,20 +1,19 @@
 using System.Collections.Generic;
-using IdleScaper.Scripts.Items;
-using IdleScaper.Scripts.Items.Definitions;
-using IdleScaper.Scripts.Skills.Core;
-using Scripts.Skills.Definitions.Woodcutting;
+using IdleScaper.Items;
+using IdleScaper.Items.Definitions;
+using IdleScaper.Skills.Core;
 
-namespace IdleScaper.Scripts.Skills.Actions
+namespace IdleScaper.Skills.Actions
 {
     /// <summary>
-    /// Handles execution of woodcutting actions.
+    /// Handles execution of gathering actions.
     /// </summary>
-    public class WoodcuttingActionProcessor : SkillActionProcessor<WoodcuttingActionDefinition>
+    public class GatheringActionProcessor : SkillActionProcessor<GatheringActionDefinition>
     {
         private readonly Inventory inventory;
         private readonly List<(ItemDefinition item, int amount)> rewardBuffer = new();
 
-        public WoodcuttingActionProcessor(PlayerSkills playerSkills, Inventory inventory) : base(playerSkills)
+        public GatheringActionProcessor(PlayerSkills playerSkills, Inventory inventory) : base(playerSkills)
         {
             this.inventory = inventory;
         }
@@ -22,15 +21,15 @@ namespace IdleScaper.Scripts.Skills.Actions
         /// <summary>
         /// Checks if player meets level and tool requirements.
         /// </summary>
-        protected override bool MeetsRequirements(WoodcuttingActionDefinition action)
+        protected override bool MeetsRequirements(GatheringActionDefinition action)
         {
-            if (!PlayerSkills.HasLevel(action.PrimarySkill, action.RequiredLevel)) return false;
+            if (!PlayerSkills.HasLevel(action.PrimarySkill, action.RequiredLevel)) 
+                return false;
 
             if (action.RequiredTools != null)
             {
-                for (int i = 0; i < action.RequiredTools.Length; i++)
+                foreach (var req in action.RequiredTools)
                 {
-                    var req = action.RequiredTools[i];
                     req.Normalize();
 
                     if (req.Tool == null)
@@ -47,14 +46,13 @@ namespace IdleScaper.Scripts.Skills.Actions
         /// <summary>
         /// Applies rewards and consumes tools if configured.
         /// </summary>
-        protected override void OnExecute(WoodcuttingActionDefinition action)
+        protected override void OnExecute(GatheringActionDefinition action)
         {
             // Consume tools if needed.
             if (action.RequiredTools != null)
             {
-                for (int i = 0; i < action.RequiredTools.Length; i++)
+                foreach (var req in action.RequiredTools)
                 {
-                    var req = action.RequiredTools[i];
                     req.Normalize();
 
                     if (req.Tool == null || !req.Consume)
@@ -66,9 +64,8 @@ namespace IdleScaper.Scripts.Skills.Actions
 
             // Roll and grant rewards.
             action.GetRolledRewards(rewardBuffer);
-            for (int i = 0; i < rewardBuffer.Count; i++)
+            foreach (var (item, amount) in rewardBuffer)
             {
-                var (item, amount) = rewardBuffer[i];
                 inventory.Add(item, amount);
             }
         }

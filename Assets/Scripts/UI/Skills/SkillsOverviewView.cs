@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using IdleScaper.Scripts.Skills.Core;
+using IdleScaper.Skills.Core;
 using UnityEngine;
 
-namespace IdleScaper.Scripts.UI.Skills
+namespace IdleScaper.UI.Skills
 {
     /// <summary>
     /// Updates a set of predefined skill view entries from PlayerSkills.

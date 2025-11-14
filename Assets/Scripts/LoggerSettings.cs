@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace IdleScaper.Scripts
+namespace IdleScaper
 {
     [DisallowMultipleComponent]
     public class LoggerSettings : MonoBehaviour

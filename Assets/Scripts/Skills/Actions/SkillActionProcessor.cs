@@ -1,6 +1,6 @@
-using IdleScaper.Scripts.Skills.Core;
+using IdleScaper.Skills.Core;
 
-namespace IdleScaper.Scripts.Skills.Actions
+namespace IdleScaper.Skills.Actions
 {
     /// <summary>
     /// Base processor for handling a specific action definition type.

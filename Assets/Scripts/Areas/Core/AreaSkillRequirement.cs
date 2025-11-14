@@ -1,7 +1,7 @@
 using System;
-using IdleScaper.Scripts.Skills.Core;
+using IdleScaper.Skills.Core;
 
-namespace IdleScaper.Scripts.Areas.Core
+namespace IdleScaper.Areas.Core
 {
     /// <summary>
     /// Skill requirement for entering or using an area.
