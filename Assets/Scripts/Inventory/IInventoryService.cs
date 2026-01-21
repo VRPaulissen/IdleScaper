@@ -1,0 +1,40 @@
+using System;
+using Items.Runtime;
+
+namespace Inventory
+{
+    /// <summary>
+    /// Abstraction for inventory operations.
+    /// Used by gameplay systems (rewards, crafting, equipment).
+    /// </summary>
+    public interface IInventoryService
+    {
+        /// <summary>
+        /// Attempts to add the given item and quantity to the inventory.
+        /// Returns false if not all items could be added.
+        /// </summary>
+        InventoryResult TryAdd(ItemId itemId, int quantity);
+
+        /// <summary>
+        /// Attempts to remove the given item and quantity from the inventory.
+        /// Returns false if insufficient items are present.
+        /// </summary>
+        InventoryResult TryRemove(ItemId itemId, int quantity);
+
+        /// <summary>
+        /// Attempts to move or merge items between two inventory slots.
+        /// Intended for UI interactions (drag & drop).
+        /// </summary>
+        InventoryResult TryMove(int fromSlotIndex, int toSlotIndex);
+
+        /// <summary>
+        /// Returns the inventory slot data at the given index.
+        /// </summary>
+        InventorySlotData GetSlot(int slotIndex);
+        
+        /// <summary>
+        /// Raised whenever the inventory content changes.
+        /// </summary>
+        event Action InventoryChanged;
+    }
+}
