@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Items.Runtime;
+using Player;
 using Resource.Definitions;
 using Utilities.Calculations;
 
@@ -23,15 +24,17 @@ namespace Resource.Runtime
         }
 
         /// <summary>
-        /// Applies one hit to the resource and returns true if it was depleted by this hit.
+        /// Applies one hit to the resource using the provided tool stats and returns true if it was depleted by this hit.
         /// </summary>
         public bool ApplyHit(
-            ResourceDefinition definition, 
-            ResourceRuntimeState state, 
-            int damageOverride, 
+            ResourceDefinition definition,
+            ResourceRuntimeState state,
+            GatheringToolStats tool,
+            out GatheringDamageRoll damageRoll,
             out IReadOnlyList<ItemInstance> depletionDrops)
         {
             depletionDrops = Array.Empty<ItemInstance>();
+            damageRoll = GatheringDamageRoll.Normal(0);
 
             if (definition == null)
                 return false;
@@ -39,7 +42,12 @@ namespace Resource.Runtime
             if (state == null)
                 return false;
 
-            var damage = damageOverride > 0 ? damageOverride : definition.BaseDamagePerHit;
+            // If tool has no valid base damage, fall back to definition base damage as a normal hit.
+            damageRoll = tool.BaseDamagePerHit > 0 ? 
+                tool.RollDamage(randomSource) : 
+                GatheringDamageRoll.Normal(definition.BaseDamagePerHit);
+
+            var damage = damageRoll.FinalDamage;
             if (damage <= 0)
                 return false;
 

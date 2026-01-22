@@ -1,3 +1,4 @@
+using Player;
 using UnityEngine;
 using UnityEngine.UI;
 using Logger = Utilities.Logging.Logger;

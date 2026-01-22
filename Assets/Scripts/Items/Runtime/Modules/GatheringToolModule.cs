@@ -9,8 +9,18 @@ namespace Items.Runtime.Modules
     [CreateAssetMenu(menuName = "Game/Items/Modules/Gathering Tool", fileName = "Mod_GatheringTool_")]
     public sealed class GatheringToolModule : ItemModule
     {
-        [SerializeField, Min(0.05f)] private float hitIntervalSeconds = 2f;
+        private const float MIN_HIT_INTERVAL_SECONDS = 0.05f;
+
+        [Header("Core")]
+        [SerializeField, Min(MIN_HIT_INTERVAL_SECONDS)] private float hitIntervalSeconds = 2f;
         [SerializeField, Min(1)] private int damagePerHit = 1;
+
+        [Header("Crits")]
+        [SerializeField, Range(0f, 1f)] private float critChance = 0.05f;
+        [SerializeField, Min(1)] private int critMultiplier = 3;
+
+        [SerializeField, Range(0f, 1f)] private float ultraCritChance = 0.005f;
+        [SerializeField, Min(1)] private int ultraCritMultiplier = 10;
 
         /// <summary>
         /// Time between gathering hits while using this tool.
@@ -18,18 +28,38 @@ namespace Items.Runtime.Modules
         public float HitIntervalSeconds => hitIntervalSeconds;
 
         /// <summary>
-        /// Damage applied per gathering hit while using this tool.
+        /// Base damage applied per gathering hit while using this tool (before crit rolls).
         /// </summary>
         public int DamagePerHit => damagePerHit;
+
+        /// <summary>
+        /// Chance [0..1] for a critical hit (applies if Ultra Crit did not trigger).
+        /// </summary>
+        public float CritChance => critChance;
+
+        /// <summary>
+        /// Damage multiplier when a critical hit triggers.
+        /// </summary>
+        public int CritMultiplier => critMultiplier;
+
+        /// <summary>
+        /// Chance [0..1] for an ultra critical hit (rolled first).
+        /// </summary>
+        public float UltraCritChance => ultraCritChance;
+
+        /// <summary>
+        /// Damage multiplier when an ultra critical hit triggers.
+        /// </summary>
+        public int UltraCritMultiplier => ultraCritMultiplier;
 
         /// <inheritdoc />
         public override void Validate(ItemDefinition definition)
         {
-            if (hitIntervalSeconds < 0.05f)
-                hitIntervalSeconds = 0.05f;
+            if (hitIntervalSeconds < MIN_HIT_INTERVAL_SECONDS)
+                hitIntervalSeconds = MIN_HIT_INTERVAL_SECONDS;
 
-            if (damagePerHit < 1)
-                damagePerHit = 1;
+            critChance = Mathf.Clamp01(critChance);
+            ultraCritChance = Mathf.Clamp01(ultraCritChance);
         }
     }
 }

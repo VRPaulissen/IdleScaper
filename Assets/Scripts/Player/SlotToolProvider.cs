@@ -35,10 +35,17 @@ namespace Player
             if (!itemDatabase.TryGet(toolItemId, out var def) || def == null)
                 return false;
 
-            if (!def.TryGetModule<Items.Runtime.Modules.GatheringToolModule>(out var mod) || mod == null)
+            if (!def.TryGetModule<GatheringToolModule>(out var mod) || mod == null)
                 return false;
 
-            tool = new GatheringToolStats(mod.HitIntervalSeconds, mod.DamagePerHit);
+            tool = new GatheringToolStats(
+                mod.HitIntervalSeconds,
+                mod.DamagePerHit,
+                mod.CritChance,
+                mod.CritMultiplier,
+                mod.UltraCritChance,
+                mod.UltraCritMultiplier);
+
             return true;
         }
     }

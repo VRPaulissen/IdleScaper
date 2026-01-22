@@ -39,7 +39,13 @@ namespace Resource.Runtime
         /// Raised when durability changes.
         /// </summary>
         public event Action<ResourceNode, int, int> DurabilityChanged;
-
+        
+        /// <summary>
+        /// Raised when a gathering hit applied damage.
+        /// Provides roll details and the resulting durability state after the hit.
+        /// </summary>
+        public event Action<ResourceNode, GatheringDamageRoll> DamageApplied;
+        
         /// <summary>
         /// Raised when the node is depleted and rewards are rolled.
         /// </summary>
@@ -109,7 +115,10 @@ namespace Resource.Runtime
         /// <summary>
         /// Injects runtime dependencies for rewards and tool selection.
         /// </summary>
-        public void Initialize(IInventoryService inventory, IResourceToolProvider resourceToolProvider, ResourceInteractorCoordinator coordinator)
+        public void Initialize(
+            IInventoryService inventory, 
+            IResourceToolProvider resourceToolProvider, 
+            ResourceInteractorCoordinator coordinator)
         {
             inventoryService = inventory;
             toolProvider = resourceToolProvider;
@@ -130,7 +139,6 @@ namespace Resource.Runtime
                 return;
             }
 
-            Logger.Log($"{nameof(ResourceNode)} clicked: {name}");
             interactionCoordinator.RequestToggle(this);
         }
 
@@ -186,11 +194,15 @@ namespace Resource.Runtime
                 var wasDepleted = interactor.ApplyHit(
                     definition,
                     state,
-                    damageOverride: tool.DamagePerHit,
+                    tool,
+                    out var damageRoll,
                     out var drops);
 
+                if (damageRoll.FinalDamage > 0)
+                    DamageApplied?.Invoke(this, damageRoll);
+                
                 DurabilityChanged?.Invoke(this, state.DurabilityCurrent, definition.DurabilityMax);
-
+                
                 if (!wasDepleted)
                     continue;
 

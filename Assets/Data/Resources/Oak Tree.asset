@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Resource.Definitions.ResourceDefinition
   aliveSprite: {fileID: 21300000, guid: b2467738f88ea5f4788916105bbb2401, type: 3}
   depletedSprite: {fileID: 21300000, guid: 7549d2ccf2d1717469b1def9e7e87085, type: 3}
-  durabilityMax: 20
+  durabilityMax: 50
   hitIntervalSeconds: 1
   baseDamagePerHit: 1
   entries:

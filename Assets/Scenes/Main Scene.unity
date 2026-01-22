@@ -755,12 +755,11 @@ MonoBehaviour:
   interactionCoordinator: {fileID: 2063547960}
   itemDatabase: {fileID: 11400000, guid: e1979bf16702a024fb214f414876d7dd, type: 2}
   axeDefinition: {fileID: 11400000, guid: 792adbb7226ce294b8de4ef49cdf7e0e, type: 2}
+  spawnContainer: {fileID: 2063547959}
   spawnCount: 5
-  areaCenter: {x: 0, y: 0, z: 0}
-  areaSize: {x: 20, y: 0, z: 20}
-  minDistance: 2.5
+  minDistancePixels: 120
   maxAttemptsPerNode: 50
-  spawnOnAwake: 1
+  paddingPixels: {x: 40, y: 40}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

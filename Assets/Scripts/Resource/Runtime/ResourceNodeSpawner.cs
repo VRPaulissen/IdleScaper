@@ -80,8 +80,7 @@ namespace Resource.Runtime
             {
                 if (!TryFindNonOverlappingAnchoredPosition(spawnContainer, positions, out var anchored))
                 {
-                    Logger.LogError(
-                        $"{nameof(ResourceNodeSpawner)} could not place node {i + 1}/{spawnCount}. " +
+                    Logger.LogError($"{nameof(ResourceNodeSpawner)} could not place node {i + 1}/{spawnCount}. " +
                         $"Increase container size, reduce minDistancePixels, or increase maxAttemptsPerNode.");
                     break;
                 }

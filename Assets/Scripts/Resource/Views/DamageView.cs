@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DG.Tweening;
+using Player;
 using TMPro;
 using UnityEngine;
 using Logger = Utilities.Logging.Logger;
@@ -13,11 +14,18 @@ namespace Resource.Runtime
     public sealed class DamageView : MonoBehaviour
     {
         private const float DEFAULT_LIFETIME_SECONDS = 2f;
+        private const string NORMAL_SUFFIX = "";
+        private const string CRIT_SUFFIX = "!";
+        private const string ULTRA_SUFFIX = "!!";
 
         [Header("Prefab & Parent")]
         [SerializeField] private TMP_Text damageTextPrefab;
         [SerializeField] private RectTransform spawnParentOverride;
         [SerializeField] private Vector2 spawnOffset = new Vector2(0f, 40f);
+
+        [Header("Colors")]
+        [SerializeField] private Color critColor = new Color(1f, 0.55f, 0f, 1f);     
+        [SerializeField] private Color ultraCritColor = new Color(0.65f, 0.25f, 1f, 1f); 
 
         [Header("Animation")]
         [SerializeField, Min(0.1f)] private float lifetimeSeconds = DEFAULT_LIFETIME_SECONDS;
@@ -33,10 +41,9 @@ namespace Resource.Runtime
         private readonly Queue<TMP_Text> pool = new Queue<TMP_Text>(32);
 
         private ResourceNode node;
-        private int lastDurability;
-        private bool hasBaseline;
+        private Color normalColor;
 
-        private RectTransform SpawnParent => spawnParentOverride != null
+        private RectTransform spawnParent => spawnParentOverride != null
             ? spawnParentOverride
             : (RectTransform)transform;
 
@@ -58,74 +65,51 @@ namespace Resource.Runtime
                 return;
             }
 
+            normalColor = damageTextPrefab.color;
+
             Prewarm();
-        }
-
-        private void OnEnable()
-        {
-            node.DurabilityChanged += HandleDurabilityChanged;
+  
+            node.DamageApplied += HandleDamageApplied;
             node.DepletionStateChanged += HandleDepletionStateChanged;
-
-            hasBaseline = false;
         }
 
         private void OnDisable()
         {
-            node.DurabilityChanged -= HandleDurabilityChanged;
+            DOTween.Kill(spawnParent, complete: false);
+        }
+
+        private void OnDestroy()
+        {
+            node.DamageApplied -= HandleDamageApplied;
             node.DepletionStateChanged -= HandleDepletionStateChanged;
 
-            hasBaseline = false;
-
-            // Kill any running tweens that target children under this view (safe if used as parent).
-            DOTween.Kill(SpawnParent, complete: false);
+            DOTween.Kill(spawnParent, complete: false);
         }
 
         private void HandleDepletionStateChanged(ResourceNode resourceNode, bool isDepleted)
         {
-            if (isDepleted)
-            {
-                hasBaseline = false;
-                return;
-            }
-
-            lastDurability = resourceNode.DurabilityCurrent;
-            hasBaseline = true;
+            // No baseline logic needed anymore; damage is driven by the roll.
+            // Still useful to ignore events while depleted.
         }
 
-        private void HandleDurabilityChanged(ResourceNode resourceNode, int current, int max)
-        {
-            if (!resourceNode.isActiveAndEnabled || resourceNode.IsDepleted)
-                return;
-
-            if (!hasBaseline)
-            {
-                lastDurability = current;
-                hasBaseline = true;
-                return;
-            }
-
-            var damage = Mathf.Max(0, lastDurability - current);
-            lastDurability = current;
-
-            if (damage <= 0)
-                return;
-
-            SpawnDamageText(damage);
-        }
-
-        private void SpawnDamageText(int damage)
+        private void HandleDamageApplied(ResourceNode resourceNode, GatheringDamageRoll roll)
         {
             var text = Rent();
             text.gameObject.SetActive(true);
 
-            // Ensure no leftover tweens from previous use.
             text.DOKill(complete: false);
 
-            text.SetText(damage.ToString());
             text.alpha = 1f;
+            text.color = GetColor(roll.HitType);
+
+            var suffix = GetSuffix(roll.HitType);
+            if (suffix.Length == 0)
+                text.SetText(roll.FinalDamage.ToString());
+            else
+                text.SetText($"{roll.FinalDamage}{suffix}");
 
             var rect = text.rectTransform;
-            rect.SetParent(SpawnParent, worldPositionStays: false);
+            rect.SetParent(spawnParent, worldPositionStays: false);
 
             var startPos = spawnOffset;
             rect.anchoredPosition = startPos;
@@ -133,10 +117,8 @@ namespace Resource.Runtime
             var driftX = Random.Range(-horizontalDrift, horizontalDrift);
             var endPos = startPos + new Vector2(driftX, riseDistance);
 
-            // Use a single sequence for deterministic cleanup and pooling.
-            // SetTarget allows killing all spawned sequences by killing SpawnParent target if desired.
             var sequence = DOTween.Sequence()
-                .SetTarget(SpawnParent)
+                .SetTarget(spawnParent)
                 .SetUpdate(isIndependentUpdate: false);
 
             sequence.Join(rect.DOAnchorPos(endPos, lifetimeSeconds).SetEase(moveEase));
@@ -147,12 +129,41 @@ namespace Resource.Runtime
                 if (text == null)
                     return;
 
-                // Defensive: kill any tweens that might still exist.
                 text.DOKill(complete: false);
                 Return(text);
             });
 
             sequence.Play();
+        }
+
+        private Color GetColor(GatheringHitType hitType)
+        {
+            switch (hitType)
+            {
+                case GatheringHitType.Crit:
+                    return critColor;
+
+                case GatheringHitType.UltraCrit:
+                    return ultraCritColor;
+
+                default:
+                    return normalColor;
+            }
+        }
+
+        private static string GetSuffix(GatheringHitType hitType)
+        {
+            switch (hitType)
+            {
+                case GatheringHitType.Crit:
+                    return CRIT_SUFFIX;
+
+                case GatheringHitType.UltraCrit:
+                    return ULTRA_SUFFIX;
+
+                default:
+                    return NORMAL_SUFFIX;
+            }
         }
 
         private void Prewarm()
@@ -187,7 +198,7 @@ namespace Resource.Runtime
 
         private TMP_Text CreateInstance()
         {
-            var instance = Instantiate(damageTextPrefab, SpawnParent, worldPositionStays: false);
+            var instance = Instantiate(damageTextPrefab, spawnParent, worldPositionStays: false);
             instance.gameObject.SetActive(false);
             return instance;
         }
