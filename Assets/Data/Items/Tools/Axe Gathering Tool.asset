@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9ba13d159be4333955be58985f7c905, type: 3}
   m_Name: Axe Gathering Tool
   m_EditorClassIdentifier: Assembly-CSharp::Items.Runtime.Modules.GatheringToolModule
-  hitIntervalSeconds: 2
-  damagePerHit: 1
+  hitIntervalSeconds: 0.5
+  damagePerHit: 2

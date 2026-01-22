@@ -24,8 +24,10 @@ namespace Resource.Runtime
         [SerializeField] private bool respawns = true;
         [SerializeField, Min(0.1f)] private float respawnSeconds = 10f;
 
-        private readonly ResourceRuntimeState state = new();
-
+        private readonly ResourceRuntimeState state = new ResourceRuntimeState();
+        
+        private ResourceInteractorCoordinator interactionCoordinator;
+        
         private ResourceInteractor interactor;
         private IInventoryService inventoryService;
         private IResourceToolProvider toolProvider;
@@ -96,15 +98,24 @@ namespace Resource.Runtime
             interactor = new ResourceInteractor(new UnityRandomSource());
         }
 
+        private void OnDisable()
+        {
+            if (interactionCoordinator != null)
+                interactionCoordinator.Unregister(this);
+            
+            StopInteraction();
+        }
+        
         /// <summary>
         /// Injects runtime dependencies for rewards and tool selection.
         /// </summary>
-        public void Initialize(IInventoryService inventory, IResourceToolProvider resourceToolProvider)
+        public void Initialize(IInventoryService inventory, IResourceToolProvider resourceToolProvider, ResourceInteractorCoordinator coordinator)
         {
             inventoryService = inventory;
             toolProvider = resourceToolProvider;
+            interactionCoordinator = coordinator;
         }
-
+            
         /// <summary>
         /// Handles pointer click to start interaction.
         /// </summary>
@@ -113,7 +124,14 @@ namespace Resource.Runtime
             if (eventData.button != PointerEventData.InputButton.Left)
                 return;
 
-            TryStartInteraction();
+            if (interactionCoordinator == null)
+            {
+                Logger.LogWarning($"{nameof(ResourceNode)} on {name} has no {nameof(ResourceInteractorCoordinator)} assigned.");
+                return;
+            }
+
+            Logger.Log($"{nameof(ResourceNode)} clicked: {name}");
+            interactionCoordinator.RequestToggle(this);
         }
 
         #region Interaction
@@ -121,7 +139,7 @@ namespace Resource.Runtime
         /// <summary>
         /// Starts the interaction loop if possible.
         /// </summary>
-        private void TryStartInteraction()
+        public void StartInteraction()
         {
             if (!isActiveAndEnabled)
                 return;
@@ -186,23 +204,7 @@ namespace Resource.Runtime
             isDepleted = true;
             interactionRoutine = null;
 
-            if (drops != null && drops.Count > 0)
-            {
-                for (var i = 0; i < drops.Count; i++)
-                {
-                    var drop = drops[i];
-                    var add = inventoryService.TryAdd(drop.ItemId, drop.Quantity);
-
-                    if (add.IsSuccess)
-                        continue;
-
-                    var addedQuantity = drop.Quantity - add.UnprocessedQuantity;
-                    Logger.LogWarning(
-                        $"{nameof(ResourceNode)} on {name} failed to add drop. " +
-                        $"Item={drop.ItemId} Requested={drop.Quantity} Added={addedQuantity} NotAdded={add.UnprocessedQuantity} " +
-                        $"Code={add.Code} Message='{add.Message}'");
-                }
-            }
+            HandleDrops(drops);
 
             Depleted?.Invoke(this, drops);
             DepletionStateChanged?.Invoke(this, isDepleted);
@@ -211,6 +213,46 @@ namespace Resource.Runtime
                 return;
 
             StartCoroutine(RespawnAfterDelay());
+        }
+
+        private void HandleDrops(IReadOnlyList<ItemInstance> drops)
+        {
+            var nodeLabel = $"<color=#4FC3F7>{name}</color>";
+
+            if (drops != null && drops.Count > 0)
+            {
+                Logger.Log(
+                    $"{nameof(ResourceNode)} {nodeLabel} depleted. " +
+                    $"Rolling <color=#FFD54F>{drops.Count}</color> drop(s).");
+
+                for (var i = 0; i < drops.Count; i++)
+                {
+                    var drop = drops[i];
+                    var add = inventoryService.TryAdd(drop.ItemId, drop.Quantity);
+
+                    if (add.IsSuccess)
+                    {
+                        Logger.Log(
+                            $"  <color=#81C784>+ {drop.Quantity}x {drop.ItemId}</color>");
+                        continue;
+                    }
+
+                    var addedQuantity = drop.Quantity - add.UnprocessedQuantity;
+
+                    Logger.LogWarning(
+                        $"  <color=#FFB74D>± {drop.ItemId}</color> " +
+                        $"Requested={drop.Quantity}, " +
+                        $"Added={addedQuantity}, " +
+                        $"NotAdded={add.UnprocessedQuantity} " +
+                        $"(<i>{add.Code}</i>: {add.Message})");
+                }
+            }
+            else
+            {
+                Logger.Log(
+                    $"{nameof(ResourceNode)} {nodeLabel} depleted. " +
+                    $"<color=#B0BEC5>No drops rolled.</color>"); // grey
+            }
         }
 
         private IEnumerator RespawnAfterDelay()
