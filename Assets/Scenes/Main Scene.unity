@@ -738,7 +738,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 746846c1b9a74e7abae64c30d961083e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Resource.Runtime.ResourceInteractorCoordinator
-  maxConcurrentInteractions: 2
+  maxConcurrentInteractions: 5
 --- !u!114 &2063547961
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -756,7 +756,7 @@ MonoBehaviour:
   itemDatabase: {fileID: 11400000, guid: e1979bf16702a024fb214f414876d7dd, type: 2}
   axeDefinition: {fileID: 11400000, guid: 792adbb7226ce294b8de4ef49cdf7e0e, type: 2}
   spawnContainer: {fileID: 2063547959}
-  spawnCount: 5
+  spawnCount: 12
   minDistancePixels: 120
   maxAttemptsPerNode: 50
   paddingPixels: {x: 40, y: 40}
