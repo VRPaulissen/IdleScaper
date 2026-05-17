@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Items.Runtime;
+using Items.Runtime.Diagnostics;
 using UnityEngine;
 
 namespace Items.Definitions
@@ -76,6 +77,55 @@ namespace Items.Definitions
         /// Returns all modules attached to this item.
         /// </summary>
         public IReadOnlyList<ItemModule> Modules => modules;
+
+        /// <summary>
+        /// Appends non-mutating diagnostics for this item definition.
+        /// </summary>
+        public void CollectDiagnostics(List<ItemDiagnostic> results)
+        {
+            if (results == null)
+                return;
+
+            if (!id.IsValid)
+                results.Add(ItemDiagnostic.Error("ITEM_ID_MISSING", $"Item '{name}' has no ItemId.", this, id));
+
+            if (string.IsNullOrWhiteSpace(displayName))
+                results.Add(ItemDiagnostic.Warning("ITEM_DISPLAY_NAME_MISSING", $"Item '{name}' has no display name.", this, id));
+
+            if (stackable && maxStackSize <= 0)
+                results.Add(ItemDiagnostic.Error("ITEM_STACK_SIZE_INVALID", $"Stackable item '{name}' has max stack size <= 0.", this, id));
+
+            if (!stackable && maxStackSize != 1)
+                results.Add(ItemDiagnostic.Warning("ITEM_NON_STACKABLE_STACK_SIZE", $"Non-stackable item '{name}' should use max stack size 1.", this, id));
+
+            CollectModuleDiagnostics(results);
+        }
+
+        private void CollectModuleDiagnostics(List<ItemDiagnostic> results)
+        {
+            if (modules == null)
+            {
+                results.Add(ItemDiagnostic.Warning("ITEM_MODULES_NULL", $"Item '{name}' has a null module list.", this, id));
+                return;
+            }
+
+            var moduleTypes = new HashSet<System.Type>();
+            for (var i = 0; i < modules.Count; i++)
+            {
+                var module = modules[i];
+                if (module == null)
+                {
+                    results.Add(ItemDiagnostic.Warning("ITEM_MODULE_NULL", $"Item '{name}' has a null module reference at index {i}.", this, id));
+                    continue;
+                }
+
+                var moduleType = module.GetType();
+                if (!moduleTypes.Add(moduleType))
+                    results.Add(ItemDiagnostic.Warning("ITEM_MODULE_DUPLICATE_TYPE", $"Item '{name}' has multiple modules of type {moduleType.Name}.", module, id));
+
+                module.CollectDiagnostics(this, results);
+            }
+        }
 
         private void OnValidate()
         {

@@ -225,7 +225,7 @@ namespace Tools.Runtime
                     slotId);
             }
 
-            if (!itemDatabase.TryGet(partItemId, out var itemDefinition) || itemDefinition == null)
+            if (!itemDatabase.TryGetItem(partItemId, out var itemDefinition) || itemDefinition == null)
             {
                 return ToolUpgradeResult.Failure(
                     ToolUpgradeFailureReason.ItemDefinitionNotFound,

@@ -58,7 +58,7 @@ namespace Equipment
 
             var itemId = invSlot.ItemId;
 
-            if (!itemDatabase.TryGet(itemId, out var def) || def == null)
+            if (!itemDatabase.TryGetItem(itemId, out var def) || def == null)
                 return EquipmentResult.Failure(EquipmentResultCode.ItemNotFoundInDatabase, "Item not found in ItemDatabase.", default, itemId);
 
             if (!def.TryGetModule<EquipmentModule>(out var equipModule) || equipModule == null)
@@ -69,19 +69,14 @@ namespace Equipment
 
             if (previous.IsValid)
             {
-                var preflight = inventory.TryAdd(previous, 1);
-                if (!preflight.IsSuccess)
+                if (!inventory.CanAdd(previous, 1))
                 {
                     return EquipmentResult.Failure(
                         EquipmentResultCode.InventoryNoSpaceForSwap,
-                        $"Cannot swap: {preflight.Code}.",
+                        "Cannot swap: inventory has no space for the previous item.",
                         targetSlot,
                         itemId);
                 }
-
-                // Revert the preflight add; we only wanted to check capacity.
-                // If you prefer, add an inventory.CanAdd(...) method to avoid this.
-                inventory.TryRemove(previous, 1);
             }
 
             var removeResult = inventory.TryRemove(itemId, 1);
@@ -122,7 +117,7 @@ namespace Equipment
         {
             var itemId = item.Id;
 
-            if (!itemDatabase.TryGet(itemId, out var def) || def == null)
+            if (!itemDatabase.TryGetItem(itemId, out var def) || def == null)
                 return EquipmentResult.Failure(EquipmentResultCode.ItemNotFoundInDatabase, "Item not found in ItemDatabase.", default, itemId);
 
             if (!def.TryGetModule<EquipmentModule>(out var equipModule) || equipModule == null)
@@ -133,17 +128,14 @@ namespace Equipment
 
             if (previous.IsValid)
             {
-                var preflight = inventory.TryAdd(previous, 1);
-                if (!preflight.IsSuccess)
+                if (!inventory.CanAdd(previous, 1))
                 {
                     return EquipmentResult.Failure(
                         EquipmentResultCode.InventoryNoSpaceForSwap,
-                        $"Cannot swap: {preflight.Code}.",
+                        "Cannot swap: inventory has no space for the previous item.",
                         targetSlot,
                         itemId);
                 }
-
-                inventory.TryRemove(previous, 1);
             }
 
             SetEquipped(targetSlot, itemId);

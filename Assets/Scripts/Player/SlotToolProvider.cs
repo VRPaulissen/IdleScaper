@@ -32,7 +32,7 @@ namespace Player
             if (!toolItemId.IsValid)
                 return false;
 
-            if (!itemDatabase.TryGet(toolItemId, out var def) || def == null)
+            if (!itemDatabase.TryGetItem(toolItemId, out var def) || def == null)
                 return false;
 
             if (!def.TryGetModule<GatheringToolModule>(out var mod) || mod == null)

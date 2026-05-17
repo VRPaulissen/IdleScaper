@@ -1,10 +1,11 @@
 using System;
+using Items.Definitions;
 using Items.Runtime;
 using UnityEngine;
 
 namespace Inventory
 {
-/// <summary>
+    /// <summary>
     /// Inventory operations for stack-based items using <see cref="ItemDatabase"/> as the catalog.
     /// </summary>
     public sealed class InventoryService : IInventoryService
@@ -44,7 +45,7 @@ namespace Inventory
             if (quantity <= 0)
                 return InventoryResult.Failure(InventoryResultCode.InvalidQuantity, "Quantity must be > 0.", itemId, quantity, quantity);
 
-            if (!itemDatabase.TryGet(itemId, out var def) || def == null)
+            if (!itemDatabase.TryGetItem(itemId, out var def) || def == null)
                 return InventoryResult.Failure(InventoryResultCode.ItemNotFoundInDatabase, "Item not found in ItemDatabase.", itemId, quantity, quantity);
 
             var remaining = quantity;
@@ -68,6 +69,21 @@ namespace Inventory
                 remaining);
         }
 
+        /// <inheritdoc />
+        public bool CanAdd(ItemId itemId, int quantity)
+        {
+            if (!itemId.IsValid)
+                return false;
+
+            if (quantity <= 0)
+                return false;
+
+            if (!itemDatabase.TryGetItem(itemId, out var def) || def == null)
+                return false;
+
+            return CanFitQuantity(itemId, quantity, def);
+        }
+
         /// <summary>
         /// Attempts to remove the given item and quantity. Returns false if insufficient items exist.
         /// </summary>
@@ -79,9 +95,19 @@ namespace Inventory
             if (quantity <= 0)
                 return InventoryResult.Failure(InventoryResultCode.InvalidQuantity, "Quantity must be > 0.", itemId, quantity, quantity);
 
-            var remaining = quantity;
-
             var slots = state.Slots;
+            var available = GetQuantity(itemId);
+            if (available < quantity)
+            {
+                return InventoryResult.Failure(
+                    InventoryResultCode.InsufficientItems,
+                    "Not enough items to remove requested quantity.",
+                    itemId,
+                    quantity,
+                    quantity - available);
+            }
+
+            var remaining = quantity;
             for (var i = 0; i < slots.Count; i++)
             {
                 var slot = slots[i];
@@ -99,18 +125,8 @@ namespace Inventory
                     break;
             }
 
-            if (remaining != quantity)
-                InventoryChanged?.Invoke();
-
-            if (remaining == 0)
-                return InventoryResult.Success(itemId, quantity);
-
-            return InventoryResult.Failure(
-                InventoryResultCode.InsufficientItems,
-                "Not enough items to remove requested quantity.",
-                itemId,
-                quantity,
-                remaining);
+            InventoryChanged?.Invoke();
+            return InventoryResult.Success(itemId, quantity);
         }
 
         /// <inheritdoc />
@@ -146,7 +162,7 @@ namespace Inventory
             return GetQuantity(itemId) >= quantity;
         }
 
-               /// <inheritdoc />
+        /// <inheritdoc />
         public InventoryResult TryMove(int fromSlotIndex, int toSlotIndex)
         {
             var slots = state.Slots;
@@ -163,7 +179,7 @@ namespace Inventory
             if (!from.HasItem)
                 return InventoryResult.FailureMove(InventoryResultCode.SourceEmpty, "Source slot is empty.", fromSlotIndex, toSlotIndex);
 
-            if (!itemDatabase.TryGet(from.ItemId, out var def) || def == null)
+            if (!itemDatabase.TryGetItem(from.ItemId, out var def) || def == null)
                 return InventoryResult.FailureMove(InventoryResultCode.ItemNotFoundInDatabase, "Item not found in ItemDatabase.", fromSlotIndex, toSlotIndex);
 
             if (!to.HasItem)
@@ -261,6 +277,32 @@ namespace Inventory
             }
 
             return remaining;
+        }
+
+        private bool CanFitQuantity(ItemId itemId, int quantity, ItemDefinition def)
+        {
+            var remaining = quantity;
+            var slots = state.Slots;
+            var emptySlotCapacity = def.Stackable ? def.MaxStackSize : 1;
+
+            for (var i = 0; i < slots.Count; i++)
+            {
+                var slot = slots[i];
+                if (!slot.HasItem)
+                {
+                    remaining -= Mathf.Min(emptySlotCapacity, remaining);
+                }
+                else if (def.Stackable && slot.ItemId == itemId && slot.Quantity < def.MaxStackSize)
+                {
+                    var space = def.MaxStackSize - slot.Quantity;
+                    remaining -= Mathf.Min(space, remaining);
+                }
+
+                if (remaining == 0)
+                    return true;
+            }
+
+            return false;
         }
 
         private static bool IsValidIndex(int index, int count)

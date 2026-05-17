@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using Items.Definitions;
+using Items.Runtime.Diagnostics;
 using UnityEngine;
 
 namespace Items.Runtime
@@ -13,5 +15,10 @@ namespace Items.Runtime
         /// Keep it cheap and side effect free.
         /// </summary>
         public virtual void Validate(ItemDefinition definition) { }
+
+        /// <summary>
+        /// Appends non-mutating diagnostics for this module.
+        /// </summary>
+        public virtual void CollectDiagnostics(ItemDefinition definition, List<ItemDiagnostic> results) { }
     }
 }

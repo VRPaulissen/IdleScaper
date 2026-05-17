@@ -1,3 +1,5 @@
+using Items.Definitions;
+using Items.Runtime.Diagnostics;
 using UnityEngine;
 
 namespace Items.Runtime.Modules
@@ -20,6 +22,16 @@ namespace Items.Runtime.Modules
         /// Effect strength (meaning defined by the effect).
         /// </summary>
         public int Magnitude => magnitude;
+
+        /// <inheritdoc />
+        public override void CollectDiagnostics(ItemDefinition definition, System.Collections.Generic.List<ItemDiagnostic> results)
+        {
+            if (results == null)
+                return;
+
+            if (magnitude < 0)
+                results.Add(ItemDiagnostic.Warning("CONSUMABLE_MAGNITUDE_NEGATIVE", $"ConsumableModule '{name}' has a negative magnitude.", this, definition != null ? definition.Id : default));
+        }
     }
 
     /// <summary>

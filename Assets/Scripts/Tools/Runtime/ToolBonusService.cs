@@ -59,7 +59,7 @@ namespace Tools.Runtime
             if (!slot.HasInstalledPart)
                 return;
 
-            if (!itemDatabase.TryGet(slot.InstalledPartItemId, out var itemDefinition) || itemDefinition == null)
+            if (!itemDatabase.TryGetItem(slot.InstalledPartItemId, out var itemDefinition) || itemDefinition == null)
             {
                 ToolLogger.LogWarning($"Installed tool part '{slot.InstalledPartItemId}' was not found while aggregating bonuses.");
                 return;

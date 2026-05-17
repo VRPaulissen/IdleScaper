@@ -1,4 +1,5 @@
 using Items.Definitions;
+using Items.Runtime.Diagnostics;
 using UnityEngine;
 
 namespace Items.Runtime.Modules
@@ -60,6 +61,26 @@ namespace Items.Runtime.Modules
 
             critChance = Mathf.Clamp01(critChance);
             ultraCritChance = Mathf.Clamp01(ultraCritChance);
+        }
+
+        /// <inheritdoc />
+        public override void CollectDiagnostics(ItemDefinition definition, System.Collections.Generic.List<ItemDiagnostic> results)
+        {
+            if (results == null)
+                return;
+
+            var itemId = definition != null ? definition.Id : default;
+            if (hitIntervalSeconds < MIN_HIT_INTERVAL_SECONDS)
+                results.Add(ItemDiagnostic.Error("GATHERING_TOOL_HIT_INTERVAL_INVALID", $"GatheringToolModule '{name}' has hit interval below {MIN_HIT_INTERVAL_SECONDS}.", this, itemId));
+
+            if (damagePerHit < 1)
+                results.Add(ItemDiagnostic.Error("GATHERING_TOOL_DAMAGE_INVALID", $"GatheringToolModule '{name}' has damage per hit < 1.", this, itemId));
+
+            if (critChance < 0f || critChance > 1f)
+                results.Add(ItemDiagnostic.Error("GATHERING_TOOL_CRIT_CHANCE_INVALID", $"GatheringToolModule '{name}' has crit chance outside 0..1.", this, itemId));
+
+            if (ultraCritChance < 0f || ultraCritChance > 1f)
+                results.Add(ItemDiagnostic.Error("GATHERING_TOOL_ULTRA_CRIT_CHANCE_INVALID", $"GatheringToolModule '{name}' has ultra crit chance outside 0..1.", this, itemId));
         }
     }
 }

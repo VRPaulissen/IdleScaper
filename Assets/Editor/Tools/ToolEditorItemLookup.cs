@@ -63,7 +63,7 @@ namespace Tools.Editor
                 if (database == null)
                     continue;
 
-                var definitions = database.Definitions;
+                var definitions = database.GetAll();
                 for (var j = 0; j < definitions.Count; j++)
                 {
                     AddDefinition(definitions[j]);

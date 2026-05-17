@@ -98,15 +98,19 @@ namespace Tools.Editor
                 messages.Add($"Recipe '{recipe.name}' has no item costs.");
             }
 
+            var costIds = new HashSet<ItemId>();
             for (var i = 0; i < recipe.ItemCosts.Count; i++)
             {
                 var cost = recipe.ItemCosts[i];
                 if (!cost.IsValid)
                 {
                     invalid = true;
-                    messages.Add($"Recipe '{recipe.name}' has an invalid cost at index {i}.");
+                    messages.Add($"Recipe '{recipe.name}' has an invalid cost at index {i}: item id is missing or quantity is <= 0.");
                     continue;
                 }
+
+                if (!costIds.Add(cost.ItemId))
+                    messages.Add($"Recipe '{recipe.name}' has duplicate cost item '{cost.ItemId}'.");
 
                 if (!ToolEditorItemLookup.TryGet(cost.ItemId, out _))
                     messages.Add($"Recipe '{recipe.name}' cost item '{cost.ItemId}' was not found.");

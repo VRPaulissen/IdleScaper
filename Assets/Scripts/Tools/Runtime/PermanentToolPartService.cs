@@ -211,7 +211,7 @@ namespace Tools.Runtime
                     partItemId);
             }
 
-            if (!itemDatabase.TryGet(partItemId, out var itemDefinition) || itemDefinition == null)
+            if (!itemDatabase.TryGetItem(partItemId, out var itemDefinition) || itemDefinition == null)
             {
                 return ToolPartOperationResult.Failure(
                     ToolPartOperationResultCode.ItemNotFoundInDatabase,

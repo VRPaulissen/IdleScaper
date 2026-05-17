@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Items.Definitions;
+using Items.Runtime.Diagnostics;
 using Tools.Runtime;
 using UnityEngine;
 
@@ -67,6 +68,40 @@ namespace Items.Runtime.Modules
                 maxLevel = 1;
 
             bonuses ??= new List<ToolBonusValue>();
+        }
+
+        /// <inheritdoc />
+        public override void CollectDiagnostics(ItemDefinition definition, List<ItemDiagnostic> results)
+        {
+            if (results == null)
+                return;
+
+            var itemId = definition != null ? definition.Id : default;
+            if (!compatibleToolId.IsValid)
+                results.Add(ItemDiagnostic.Error("TOOL_PART_TOOL_ID_MISSING", $"ToolPartModule '{name}' has no compatible ToolId.", this, itemId));
+
+            if (!compatibleSlotId.IsValid)
+                results.Add(ItemDiagnostic.Error("TOOL_PART_SLOT_ID_MISSING", $"ToolPartModule '{name}' has no compatible ToolPartSlotId.", this, itemId));
+
+            if (maxLevel < 1)
+                results.Add(ItemDiagnostic.Error("TOOL_PART_MAX_LEVEL_INVALID", $"ToolPartModule '{name}' has max level < 1.", this, itemId));
+
+            if (bonuses == null)
+            {
+                results.Add(ItemDiagnostic.Warning("TOOL_PART_BONUSES_NULL", $"ToolPartModule '{name}' has a null bonus list.", this, itemId));
+                return;
+            }
+
+            var bonusTypes = new HashSet<ToolBonusType>();
+            for (var i = 0; i < bonuses.Count; i++)
+            {
+                var bonus = bonuses[i];
+                if (bonus.BaseValue < 0f || bonus.ValuePerLevel < 0f)
+                    results.Add(ItemDiagnostic.Warning("TOOL_PART_BONUS_NEGATIVE", $"ToolPartModule '{name}' bonus {i} has a negative value.", this, itemId));
+
+                if (!bonusTypes.Add(bonus.Type))
+                    results.Add(ItemDiagnostic.Warning("TOOL_PART_BONUS_DUPLICATE_TYPE", $"ToolPartModule '{name}' has duplicate bonus type '{bonus.Type}'.", this, itemId));
+            }
         }
     }
 }

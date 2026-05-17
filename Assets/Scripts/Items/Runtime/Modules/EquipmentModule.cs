@@ -1,3 +1,5 @@
+using Items.Definitions;
+using Items.Runtime.Diagnostics;
 using UnityEngine;
 
 namespace Items.Runtime.Modules
@@ -26,6 +28,16 @@ namespace Items.Runtime.Modules
         /// Flat defence bonus provided when equipped.
         /// </summary>
         public int DefenceBonus => defenceBonus;
+
+        /// <inheritdoc />
+        public override void CollectDiagnostics(ItemDefinition definition, System.Collections.Generic.List<ItemDiagnostic> results)
+        {
+            if (results == null)
+                return;
+
+            if (!System.Enum.IsDefined(typeof(EquipmentSlotId), slot))
+                results.Add(ItemDiagnostic.Error("EQUIPMENT_SLOT_INVALID", $"EquipmentModule '{name}' has an invalid slot.", this, definition != null ? definition.Id : default));
+        }
     }
     
     /// <summary>

@@ -72,7 +72,7 @@ namespace Tools.State
             if (itemDatabase == null)
                 return;
 
-            if (itemDatabase.TryGet(installedPartItemId, out _))
+            if (itemDatabase.Contains(installedPartItemId))
             {
                 NormalizeLevelAgainstDefinition(itemDatabase);
                 return;
@@ -110,7 +110,7 @@ namespace Tools.State
 
         private void NormalizeLevelAgainstDefinition(ItemDatabase itemDatabase)
         {
-            if (!itemDatabase.TryGet(installedPartItemId, out var definition) || definition == null)
+            if (!itemDatabase.TryGetItem(installedPartItemId, out var definition) || definition == null)
                 return;
 
             if (!definition.TryGetModule<ToolPartModule>(out var module) || module == null)

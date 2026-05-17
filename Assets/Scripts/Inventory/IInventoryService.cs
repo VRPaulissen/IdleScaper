@@ -16,6 +16,11 @@ namespace Inventory
         InventoryResult TryAdd(ItemId itemId, int quantity);
 
         /// <summary>
+        /// Returns true if the inventory can fit the requested item quantity without mutating state.
+        /// </summary>
+        bool CanAdd(ItemId itemId, int quantity);
+
+        /// <summary>
         /// Attempts to remove the given item and quantity from the inventory.
         /// Returns false if insufficient items are present.
         /// </summary>

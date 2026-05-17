@@ -146,7 +146,7 @@ namespace Tools.ViewModels
                 return new ToolPartViewModel(default, "Empty", null, 0, 0, false);
 
             var partItemId = slotState.InstalledPartItemId;
-            if (!itemDatabase.TryGet(partItemId, out var itemDefinition) || itemDefinition == null)
+            if (!itemDatabase.TryGetItem(partItemId, out var itemDefinition) || itemDefinition == null)
                 return new ToolPartViewModel(partItemId, "Missing Item", null, slotState.PartLevel, 0, true);
 
             var maxLevel = GetMaxLevel(itemDefinition);
@@ -171,7 +171,7 @@ namespace Tools.ViewModels
             if (!slotState.HasInstalledPart)
                 return BuildUnavailablePreview(0, 0, ToolUpgradeFailureReason.EmptySlot, "No part installed.");
 
-            if (!itemDatabase.TryGet(slotState.InstalledPartItemId, out var itemDefinition) || itemDefinition == null)
+            if (!itemDatabase.TryGetItem(slotState.InstalledPartItemId, out var itemDefinition) || itemDefinition == null)
                 return BuildUnavailablePreview(slotState.PartLevel, slotState.PartLevel, ToolUpgradeFailureReason.ItemDefinitionNotFound, "Installed item definition was not found.");
 
             if (!itemDefinition.TryGetModule<ToolPartModule>(out var toolPartModule) || toolPartModule == null)
@@ -245,7 +245,7 @@ namespace Tools.ViewModels
 
                 var displayName = cost.ItemId.ToString();
                 UnityEngine.Sprite icon = null;
-                if (itemDatabase.TryGet(cost.ItemId, out var itemDefinition) && itemDefinition != null)
+                if (itemDatabase.TryGetItem(cost.ItemId, out var itemDefinition) && itemDefinition != null)
                 {
                     displayName = itemDefinition.DisplayName;
                     icon = itemDefinition.Icon;

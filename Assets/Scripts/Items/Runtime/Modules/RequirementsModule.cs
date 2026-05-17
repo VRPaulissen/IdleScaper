@@ -1,3 +1,5 @@
+using Items.Definitions;
+using Items.Runtime.Diagnostics;
 using UnityEngine;
 
 namespace Items.Runtime.Modules
@@ -14,5 +16,15 @@ namespace Items.Runtime.Modules
         /// Required level to use or equip the item.
         /// </summary>
         public int RequiredLevel => requiredLevel;
+
+        /// <inheritdoc />
+        public override void CollectDiagnostics(ItemDefinition definition, System.Collections.Generic.List<ItemDiagnostic> results)
+        {
+            if (results == null)
+                return;
+
+            if (requiredLevel < 1)
+                results.Add(ItemDiagnostic.Warning("REQUIREMENTS_LEVEL_INVALID", $"RequirementsModule '{name}' has required level < 1.", this, definition != null ? definition.Id : default));
+        }
     }
 }

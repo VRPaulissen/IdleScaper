@@ -4,9 +4,11 @@ using System.Reflection;
 using Inventory;
 using Items.Definitions;
 using Items.Runtime;
+using Items.Runtime.Diagnostics;
 using Items.Runtime.Modules;
 using NUnit.Framework;
 using Tools.Definitions;
+using Tools.Editor;
 using Tools.Runtime;
 using Tools.State;
 using UnityEditor;
@@ -493,6 +495,166 @@ namespace Tests.EditMode
             }
         }
 
+        [Test]
+        public void ItemDatabaseDiagnostics_WhenDuplicateItemIdExists_ReportsDuplicateId()
+        {
+            var database = ScriptableObject.CreateInstance<ItemDatabase>();
+            var first = CreateDiagnosticItem(new ItemId("test.item.duplicate"), "First");
+            var second = CreateDiagnosticItem(new ItemId("test.item.duplicate"), "Second");
+            SetDiagnosticPrivateField(database, "definitions", new List<ItemDefinition> { first, second });
+            var diagnostics = new List<ItemDiagnostic>();
+
+            database.CollectDiagnostics(diagnostics);
+
+            Assert.IsTrue(HasDiagnostic(diagnostics, "ITEM_DATABASE_DUPLICATE_ID"));
+        }
+
+        [Test]
+        public void ItemDatabaseDiagnostics_WhenNullEntryExists_ReportsNullEntry()
+        {
+            var database = ScriptableObject.CreateInstance<ItemDatabase>();
+            SetDiagnosticPrivateField(database, "definitions", new List<ItemDefinition> { null });
+            var diagnostics = new List<ItemDiagnostic>();
+
+            database.CollectDiagnostics(diagnostics);
+
+            Assert.IsTrue(HasDiagnostic(diagnostics, "ITEM_DATABASE_ENTRY_NULL"));
+        }
+
+        [Test]
+        public void ItemDefinitionDiagnostics_WhenItemIdIsMissing_ReportsMissingId()
+        {
+            var item = CreateDiagnosticItem(default, "Missing Id");
+            var diagnostics = new List<ItemDiagnostic>();
+
+            item.CollectDiagnostics(diagnostics);
+
+            Assert.IsTrue(HasDiagnostic(diagnostics, "ITEM_ID_MISSING"));
+        }
+
+        [Test]
+        public void ItemDefinitionDiagnostics_WhenStackSettingsAreInvalid_ReportsInvalidStackSize()
+        {
+            var item = CreateDiagnosticItem(new ItemId("test.item.stack"), "Invalid Stack");
+            SetDiagnosticPrivateField(item, "stackable", true);
+            SetDiagnosticPrivateField(item, "maxStackSize", 0);
+            var diagnostics = new List<ItemDiagnostic>();
+
+            item.CollectDiagnostics(diagnostics);
+
+            Assert.IsTrue(HasDiagnostic(diagnostics, "ITEM_STACK_SIZE_INVALID"));
+        }
+
+        [Test]
+        public void ItemDefinitionDiagnostics_WhenNullModuleExists_ReportsNullModule()
+        {
+            var item = CreateDiagnosticItem(new ItemId("test.item.null_module"), "Null Module");
+            SetDiagnosticPrivateField(item, "modules", new List<ItemModule> { null });
+            var diagnostics = new List<ItemDiagnostic>();
+
+            item.CollectDiagnostics(diagnostics);
+
+            Assert.IsTrue(HasDiagnostic(diagnostics, "ITEM_MODULE_NULL"));
+        }
+
+        [Test]
+        public void ItemDefinitionDiagnostics_WhenDuplicateModuleTypeExists_ReportsDuplicateModuleType()
+        {
+            var item = CreateDiagnosticItem(new ItemId("test.item.duplicate_module"), "Duplicate Module");
+            var first = ScriptableObject.CreateInstance<RequirementsModule>();
+            var second = ScriptableObject.CreateInstance<RequirementsModule>();
+            SetDiagnosticPrivateField(item, "modules", new List<ItemModule> { first, second });
+            var diagnostics = new List<ItemDiagnostic>();
+
+            item.CollectDiagnostics(diagnostics);
+
+            Assert.IsTrue(HasDiagnostic(diagnostics, "ITEM_MODULE_DUPLICATE_TYPE"));
+        }
+
+        [Test]
+        public void ItemDefinitionDiagnostics_WhenToolPartModuleIsInvalid_ReportsToolPartIssues()
+        {
+            var item = CreateDiagnosticItem(new ItemId("test.item.invalid_tool_part"), "Invalid Tool Part");
+            var module = ScriptableObject.CreateInstance<ToolPartModule>();
+            SetDiagnosticPrivateField(module, "maxLevel", 0);
+            SetDiagnosticPrivateField(module, "bonuses", new List<ToolBonusValue>
+            {
+                new ToolBonusValue(ToolBonusType.MiningDamageFlat, -1f, 0f),
+                new ToolBonusValue(ToolBonusType.MiningDamageFlat, 0f, 1f)
+            });
+            SetDiagnosticPrivateField(item, "modules", new List<ItemModule> { module });
+            var diagnostics = new List<ItemDiagnostic>();
+
+            item.CollectDiagnostics(diagnostics);
+
+            Assert.IsTrue(HasDiagnostic(diagnostics, "TOOL_PART_TOOL_ID_MISSING"));
+            Assert.IsTrue(HasDiagnostic(diagnostics, "TOOL_PART_SLOT_ID_MISSING"));
+            Assert.IsTrue(HasDiagnostic(diagnostics, "TOOL_PART_MAX_LEVEL_INVALID"));
+            Assert.IsTrue(HasDiagnostic(diagnostics, "TOOL_PART_BONUS_NEGATIVE"));
+            Assert.IsTrue(HasDiagnostic(diagnostics, "TOOL_PART_BONUS_DUPLICATE_TYPE"));
+        }
+
+        [Test]
+        public void ToolEditorValidation_WhenRecipeCostItemIsMissing_ReportsMissingCostItem()
+        {
+            var catalog = ScriptableObject.CreateInstance<ToolUpgradeRecipeCatalog>();
+            var recipe = ScriptableObject.CreateInstance<ToolUpgradeRecipeDefinition>();
+            SetDiagnosticPrivateField(recipe, "toolId", ToolId.Pickaxe);
+            SetDiagnosticPrivateField(recipe, "slotId", ToolPartSlotId.Head);
+            SetDiagnosticPrivateField(recipe, "partItemId", new ItemId("test.item.missing_part"));
+            SetDiagnosticPrivateField(recipe, "fromLevel", 0);
+            SetDiagnosticPrivateField(recipe, "toLevel", 1);
+            SetDiagnosticPrivateField(recipe, "itemCosts", new List<ToolUpgradeCost> { new ToolUpgradeCost(new ItemId("test.item.missing_cost"), 1) });
+            SetDiagnosticPrivateField(catalog, "recipes", new List<ToolUpgradeRecipeDefinition> { recipe });
+            var messages = new List<string>();
+
+            ToolEditorValidation.ValidateCatalog(catalog, messages);
+
+            Assert.IsTrue(ContainsMessage(messages, "cost item 'test.item.missing_cost' was not found"));
+        }
+
+        private static ItemDefinition CreateDiagnosticItem(ItemId itemId, string displayName)
+        {
+            var item = ScriptableObject.CreateInstance<ItemDefinition>();
+            SetDiagnosticPrivateField(item, "id", itemId);
+            SetDiagnosticPrivateField(item, "displayName", displayName);
+            SetDiagnosticPrivateField(item, "stackable", true);
+            SetDiagnosticPrivateField(item, "maxStackSize", 99);
+            SetDiagnosticPrivateField(item, "modules", new List<ItemModule>());
+            return item;
+        }
+
+        private static bool HasDiagnostic(List<ItemDiagnostic> diagnostics, string code)
+        {
+            for (var i = 0; i < diagnostics.Count; i++)
+            {
+                if (diagnostics[i].Code == code)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static bool ContainsMessage(List<string> messages, string text)
+        {
+            for (var i = 0; i < messages.Count; i++)
+            {
+                if (messages[i].Contains(text))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static void SetDiagnosticPrivateField(object target, string fieldName, object value)
+        {
+            var field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+            if (field == null)
+                throw new MissingFieldException(target.GetType().Name, fieldName);
+
+            field.SetValue(target, value);
+        }
+
         private sealed class ToolTestFixture
         {
             public ToolCollectionState Tools { get; private set; }
@@ -628,6 +790,11 @@ namespace Tests.EditMode
                 SetQuantity(itemId, GetQuantity(itemId) + quantity);
                 InventoryChanged?.Invoke();
                 return InventoryResult.Success(itemId, quantity);
+            }
+
+            public bool CanAdd(ItemId itemId, int quantity)
+            {
+                return itemId.IsValid && quantity > 0;
             }
 
             public InventoryResult TryRemove(ItemId itemId, int quantity)
