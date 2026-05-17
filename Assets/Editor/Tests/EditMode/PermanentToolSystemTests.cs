@@ -9,6 +9,7 @@ using NUnit.Framework;
 using Tools.Definitions;
 using Tools.Runtime;
 using Tools.State;
+using UnityEditor;
 using UnityEngine;
 
 namespace Tests.EditMode
@@ -23,6 +24,19 @@ namespace Tests.EditMode
         private static readonly ItemId CostId = new ItemId("test.resource.stone");
         private static readonly ItemId PlainItemId = new ItemId("test.item.plain");
         private static readonly ToolId OtherToolId = new ToolId("tool.test.other");
+        private static readonly string[] pickaxeModuleAssetPaths =
+        {
+            "Assets/Data/Items/ToolParts/Pickaxe/Modules/Stone Pickaxe Head Module.asset",
+            "Assets/Data/Items/ToolParts/Pickaxe/Modules/Wooden Handle Module.asset",
+            "Assets/Data/Items/ToolParts/Pickaxe/Modules/Fiber Rope Module.asset",
+            "Assets/Data/Items/ToolParts/Pickaxe/Modules/Cloth Grip Module.asset",
+            "Assets/Data/Items/ToolParts/Pickaxe/Modules/Basic Polish Module.asset",
+            "Assets/Data/Items/ToolParts/Pickaxe/Modules/Copper Pickaxe Head Module.asset",
+            "Assets/Data/Items/ToolParts/Pickaxe/Modules/Oak Handle Module.asset",
+            "Assets/Data/Items/ToolParts/Pickaxe/Modules/Leather Binding Module.asset",
+            "Assets/Data/Items/ToolParts/Pickaxe/Modules/Leather Grip Module.asset",
+            "Assets/Data/Items/ToolParts/Pickaxe/Modules/Reinforced Coating Module.asset"
+        };
 
         [Test]
         public void Normalize_EnsuresPickaxeExistsByDefault()
@@ -271,6 +285,214 @@ namespace Tests.EditMode
             Assert.AreEqual(1, fixture.HeadSlot.PartLevel);
         }
 
+        [Test]
+        public void GetActiveBonuses_WithEmptyPickaxe_ReturnsZeroBonuses()
+        {
+            var fixture = ToolTestFixture.Create();
+
+            var aggregate = fixture.BonusService.GetActiveBonuses(ToolId.Pickaxe);
+
+            Assert.AreEqual(0f, aggregate.GetFlat(ToolBonusType.MiningDamageFlat));
+            Assert.AreEqual(0f, aggregate.GetMultiplier(ToolBonusType.MiningDamageMultiplier));
+        }
+
+        [Test]
+        public void GetActiveBonuses_WithCompatiblePart_ContributesBaseBonus()
+        {
+            var fixture = ToolTestFixture.Create();
+            fixture.AddToolPart(
+                StoneHeadId,
+                ToolId.Pickaxe,
+                ToolPartSlotId.Head,
+                5,
+                new ToolBonusValue(ToolBonusType.MiningDamageFlat, 2f, 0f));
+            fixture.HeadSlot.SetInstalledPart(StoneHeadId, 0);
+
+            var aggregate = fixture.BonusService.GetActiveBonuses(ToolId.Pickaxe);
+
+            Assert.AreEqual(2f, aggregate.GetFlat(ToolBonusType.MiningDamageFlat));
+        }
+
+        [Test]
+        public void GetActiveBonuses_WithPartLevel_ContributesBasePlusPerLevelBonus()
+        {
+            var fixture = ToolTestFixture.Create();
+            fixture.AddToolPart(
+                StoneHeadId,
+                ToolId.Pickaxe,
+                ToolPartSlotId.Head,
+                5,
+                new ToolBonusValue(ToolBonusType.MiningDamageFlat, 2f, 1f));
+            fixture.HeadSlot.SetInstalledPart(StoneHeadId, 3);
+
+            var aggregate = fixture.BonusService.GetActiveBonuses(ToolId.Pickaxe);
+
+            Assert.AreEqual(5f, aggregate.GetFlat(ToolBonusType.MiningDamageFlat));
+        }
+
+        [Test]
+        public void GetActiveBonuses_WithMultipleParts_AggregatesSameBonusType()
+        {
+            var fixture = ToolTestFixture.Create();
+            fixture.AddToolPart(
+                StoneHeadId,
+                ToolId.Pickaxe,
+                ToolPartSlotId.Head,
+                5,
+                new ToolBonusValue(ToolBonusType.MiningDamageFlat, 2f, 1f));
+            fixture.AddToolPart(
+                HandleId,
+                ToolId.Pickaxe,
+                ToolPartSlotId.Handle,
+                5,
+                new ToolBonusValue(ToolBonusType.MiningDamageFlat, 4f, 0.5f));
+
+            fixture.HeadSlot.SetInstalledPart(StoneHeadId, 2);
+            fixture.HandleSlot.SetInstalledPart(HandleId, 2);
+
+            var aggregate = fixture.BonusService.GetActiveBonuses(ToolId.Pickaxe);
+
+            Assert.AreEqual(9f, aggregate.GetFlat(ToolBonusType.MiningDamageFlat));
+        }
+
+        [Test]
+        public void GetActiveBonuses_WithIncompatiblePart_ContributesNothing()
+        {
+            var fixture = ToolTestFixture.Create();
+            fixture.AddToolPart(
+                HandleId,
+                ToolId.Pickaxe,
+                ToolPartSlotId.Handle,
+                5,
+                new ToolBonusValue(ToolBonusType.MiningDamageFlat, 4f, 1f));
+            fixture.HeadSlot.SetInstalledPart(HandleId, 3);
+
+            var aggregate = fixture.BonusService.GetActiveBonuses(ToolId.Pickaxe);
+
+            Assert.AreEqual(0f, aggregate.GetFlat(ToolBonusType.MiningDamageFlat));
+        }
+
+        [Test]
+        public void GetActiveBonuses_WhenInstalledItemMissingFromDatabase_ContributesNothing()
+        {
+            var fixture = ToolTestFixture.Create();
+            fixture.HeadSlot.SetInstalledPart(new ItemId("test.part.missing"), 3);
+
+            var aggregate = fixture.BonusService.GetActiveBonuses(ToolId.Pickaxe);
+
+            Assert.AreEqual(0f, aggregate.GetFlat(ToolBonusType.MiningDamageFlat));
+        }
+
+        [Test]
+        public void GetActiveBonuses_WhenInstalledItemHasNoToolPartModule_ContributesNothing()
+        {
+            var fixture = ToolTestFixture.Create();
+            fixture.HeadSlot.SetInstalledPart(PlainItemId, 3);
+
+            var aggregate = fixture.BonusService.GetActiveBonuses(ToolId.Pickaxe);
+
+            Assert.AreEqual(0f, aggregate.GetFlat(ToolBonusType.MiningDamageFlat));
+        }
+
+        [Test]
+        public void GetActiveBonuses_WhenSavedLevelExceedsMax_UsesClampedLevelWithoutMutatingState()
+        {
+            var fixture = ToolTestFixture.Create();
+            fixture.AddToolPart(
+                StoneHeadId,
+                ToolId.Pickaxe,
+                ToolPartSlotId.Head,
+                5,
+                new ToolBonusValue(ToolBonusType.MiningDamageFlat, 2f, 1f));
+            fixture.HeadSlot.SetInstalledPart(StoneHeadId, 99);
+
+            var aggregate = fixture.BonusService.GetActiveBonuses(ToolId.Pickaxe);
+
+            Assert.AreEqual(7f, aggregate.GetFlat(ToolBonusType.MiningDamageFlat));
+            Assert.AreEqual(99, fixture.HeadSlot.PartLevel);
+        }
+
+        [Test]
+        public void GetActiveBonuses_WithMultiplierBonuses_AggregatesAdditively()
+        {
+            var fixture = ToolTestFixture.Create();
+            fixture.AddToolPart(
+                StoneHeadId,
+                ToolId.Pickaxe,
+                ToolPartSlotId.Head,
+                5,
+                new ToolBonusValue(ToolBonusType.MiningDamageMultiplier, 0.1f, 0.05f));
+            fixture.AddToolPart(
+                HandleId,
+                ToolId.Pickaxe,
+                ToolPartSlotId.Handle,
+                5,
+                new ToolBonusValue(ToolBonusType.MiningDamageMultiplier, 0.25f, 0f));
+
+            fixture.HeadSlot.SetInstalledPart(StoneHeadId, 1);
+            fixture.HandleSlot.SetInstalledPart(HandleId, 0);
+
+            var aggregate = fixture.BonusService.GetActiveBonuses(ToolId.Pickaxe);
+
+            Assert.AreEqual(0.4f, aggregate.GetMultiplier(ToolBonusType.MiningDamageMultiplier), 0.0001f);
+        }
+
+        [Test]
+        public void GetActiveBonuses_DoesNotMutateToolState()
+        {
+            var fixture = ToolTestFixture.Create();
+            fixture.AddToolPart(
+                StoneHeadId,
+                ToolId.Pickaxe,
+                ToolPartSlotId.Head,
+                5,
+                new ToolBonusValue(ToolBonusType.MiningDamageFlat, 2f, 1f));
+            fixture.HeadSlot.SetInstalledPart(StoneHeadId, 2);
+
+            fixture.BonusService.GetActiveBonuses(ToolId.Pickaxe);
+
+            Assert.AreEqual(StoneHeadId, fixture.HeadSlot.InstalledPartItemId);
+            Assert.AreEqual(2, fixture.HeadSlot.PartLevel);
+        }
+
+        [Test]
+        public void GetActiveBonuses_DoesNotMutateInventory()
+        {
+            var fixture = ToolTestFixture.Create();
+            fixture.AddToolPart(
+                StoneHeadId,
+                ToolId.Pickaxe,
+                ToolPartSlotId.Head,
+                5,
+                new ToolBonusValue(ToolBonusType.MiningDamageFlat, 2f, 1f));
+            fixture.HeadSlot.SetInstalledPart(StoneHeadId, 2);
+            fixture.Inventory.SetQuantity(CostId, 7);
+
+            fixture.BonusService.GetActiveBonuses(ToolId.Pickaxe);
+
+            Assert.AreEqual(7, fixture.Inventory.GetQuantity(CostId));
+        }
+
+        [Test]
+        public void PickaxeToolPartAssets_AllContainValidBonusData()
+        {
+            for (var i = 0; i < pickaxeModuleAssetPaths.Length; i++)
+            {
+                var path = pickaxeModuleAssetPaths[i];
+                var module = AssetDatabase.LoadAssetAtPath<ToolPartModule>(path);
+                Assert.NotNull(module, path);
+                Assert.Greater(module.Bonuses.Count, 0, path);
+
+                for (var bonusIndex = 0; bonusIndex < module.Bonuses.Count; bonusIndex++)
+                {
+                    var bonus = module.Bonuses[bonusIndex];
+                    Assert.IsTrue(Enum.IsDefined(typeof(ToolBonusType), bonus.Type), path);
+                    Assert.GreaterOrEqual(bonus.BaseValue, 0f, path);
+                    Assert.GreaterOrEqual(bonus.ValuePerLevel, 0f, path);
+                }
+            }
+        }
+
         private sealed class ToolTestFixture
         {
             public ToolCollectionState Tools { get; private set; }
@@ -278,7 +500,9 @@ namespace Tests.EditMode
             public ItemDatabase ItemDatabase { get; private set; }
             public PermanentToolPartService PartService { get; private set; }
             public ToolUpgradeService UpgradeService { get; private set; }
+            public ToolBonusService BonusService { get; private set; }
             public ToolPartSlotState HeadSlot { get; private set; }
+            public ToolPartSlotState HandleSlot { get; private set; }
 
             private List<ItemDefinition> itemDefinitions;
 
@@ -289,10 +513,16 @@ namespace Tests.EditMode
                 return fixture;
             }
 
-            public void AddToolPart(ItemId itemId, ToolId toolId, ToolPartSlotId slotId, int maxLevel)
+            public void AddToolPart(
+                ItemId itemId,
+                ToolId toolId,
+                ToolPartSlotId slotId,
+                int maxLevel,
+                params ToolBonusValue[] bonuses)
             {
-                itemDefinitions.Add(CreateToolPartItem(itemId, toolId, slotId, maxLevel));
+                itemDefinitions.Add(CreateToolPartItem(itemId, toolId, slotId, maxLevel, bonuses));
                 SetPrivateField(ItemDatabase, "definitions", itemDefinitions);
+                SetPrivateField(ItemDatabase, "map", null);
             }
 
             private void Initialize(bool includeRecipe)
@@ -300,11 +530,12 @@ namespace Tests.EditMode
                 Tools = new ToolCollectionState();
                 Tools.Normalize();
                 HeadSlot = Tools.GetTool(ToolId.Pickaxe).GetPreset(0).GetSlot(ToolPartSlotId.Head);
+                HandleSlot = Tools.GetTool(ToolId.Pickaxe).GetPreset(0).GetSlot(ToolPartSlotId.Handle);
 
                 itemDefinitions = new List<ItemDefinition>
                 {
-                    CreateToolPartItem(StoneHeadId, ToolId.Pickaxe, ToolPartSlotId.Head, 5),
-                    CreateToolPartItem(HandleId, ToolId.Pickaxe, ToolPartSlotId.Handle, 5),
+                    CreateToolPartItem(StoneHeadId, ToolId.Pickaxe, ToolPartSlotId.Head, 5, Array.Empty<ToolBonusValue>()),
+                    CreateToolPartItem(HandleId, ToolId.Pickaxe, ToolPartSlotId.Handle, 5, Array.Empty<ToolBonusValue>()),
                     CreatePlainItem(CostId),
                     CreatePlainItem(PlainItemId)
                 };
@@ -316,6 +547,7 @@ namespace Tests.EditMode
                 var recipeCatalog = CreateRecipeCatalog(includeRecipe);
                 PartService = new PermanentToolPartService(Tools, ItemDatabase, Inventory);
                 UpgradeService = new ToolUpgradeService(Tools, ItemDatabase, Inventory, recipeCatalog);
+                BonusService = new ToolBonusService(Tools, ItemDatabase);
             }
 
             private static ToolUpgradeRecipeCatalog CreateRecipeCatalog(bool includeRecipe)
@@ -341,13 +573,19 @@ namespace Tests.EditMode
                 return recipe;
             }
 
-            private static ItemDefinition CreateToolPartItem(ItemId itemId, ToolId toolId, ToolPartSlotId slotId, int maxLevel)
+            private static ItemDefinition CreateToolPartItem(
+                ItemId itemId,
+                ToolId toolId,
+                ToolPartSlotId slotId,
+                int maxLevel,
+                IReadOnlyList<ToolBonusValue> bonuses)
             {
                 var item = CreatePlainItem(itemId);
                 var module = ScriptableObject.CreateInstance<ToolPartModule>();
                 SetPrivateField(module, "compatibleToolId", toolId);
                 SetPrivateField(module, "compatibleSlotId", slotId);
                 SetPrivateField(module, "maxLevel", maxLevel);
+                SetPrivateField(module, "bonuses", new List<ToolBonusValue>(bonuses));
                 SetPrivateField(item, "modules", new List<ItemModule> { module });
                 return item;
             }

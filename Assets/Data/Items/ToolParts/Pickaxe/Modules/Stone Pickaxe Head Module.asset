@@ -17,3 +17,7 @@ MonoBehaviour:
   compatibleSlotId:
     value: tool.pickaxe.slot.head
   maxLevel: 5
+  bonuses:
+  - type: 0
+    baseValue: 1
+    valuePerLevel: 0.5

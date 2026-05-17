@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Items.Definitions;
 using Tools.Runtime;
 using UnityEngine;
@@ -17,6 +18,9 @@ namespace Items.Runtime.Modules
         [Header("Progression")]
         [SerializeField, Min(1)] private int maxLevel = 1;
 
+        [Header("Bonuses")]
+        [SerializeField] private List<ToolBonusValue> bonuses = new List<ToolBonusValue>();
+
         /// <summary>
         /// Permanent tool this part can be installed into.
         /// </summary>
@@ -31,6 +35,13 @@ namespace Items.Runtime.Modules
         /// Maximum level this part can reach.
         /// </summary>
         public int MaxLevel => Mathf.Max(1, maxLevel);
+
+        /// <summary>
+        /// Bonuses contributed by this part while installed.
+        /// </summary>
+        public IReadOnlyList<ToolBonusValue> Bonuses => bonuses != null ? bonuses : EmptyBonuses;
+
+        private static readonly IReadOnlyList<ToolBonusValue> EmptyBonuses = new ToolBonusValue[0];
 
         /// <summary>
         /// Returns true when this part can be installed into the given tool slot.
@@ -54,6 +65,8 @@ namespace Items.Runtime.Modules
 
             if (maxLevel < 1)
                 maxLevel = 1;
+
+            bonuses ??= new List<ToolBonusValue>();
         }
     }
 }

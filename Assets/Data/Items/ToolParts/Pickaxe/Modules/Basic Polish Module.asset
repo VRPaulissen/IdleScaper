@@ -17,3 +17,7 @@ MonoBehaviour:
   compatibleSlotId:
     value: tool.pickaxe.slot.coating
   maxLevel: 5
+  bonuses:
+  - type: 4
+    baseValue: 0.001
+    valuePerLevel: 0.0005
