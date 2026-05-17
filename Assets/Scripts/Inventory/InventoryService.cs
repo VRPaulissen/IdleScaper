@@ -113,6 +113,39 @@ namespace Inventory
                 remaining);
         }
 
+        /// <inheritdoc />
+        public int GetQuantity(ItemId itemId)
+        {
+            if (!itemId.IsValid)
+                return 0;
+
+            var total = 0;
+            var slots = state.Slots;
+
+            for (var i = 0; i < slots.Count; i++)
+            {
+                var slot = slots[i];
+                if (!slot.HasItem || slot.ItemId != itemId)
+                    continue;
+
+                total += slot.Quantity;
+            }
+
+            return total;
+        }
+
+        /// <inheritdoc />
+        public bool CanRemove(ItemId itemId, int quantity)
+        {
+            if (!itemId.IsValid)
+                return false;
+
+            if (quantity <= 0)
+                return false;
+
+            return GetQuantity(itemId) >= quantity;
+        }
+
                /// <inheritdoc />
         public InventoryResult TryMove(int fromSlotIndex, int toSlotIndex)
         {

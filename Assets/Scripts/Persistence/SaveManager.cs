@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using IdleScaper.Persistence.Core;
 using IdleScaper.Persistence.Integrity;
+using Items.Runtime;
 using UnityEngine;
 
 namespace IdleScaper.Persistence
@@ -63,10 +64,11 @@ namespace IdleScaper.Persistence
         /// <summary>
         /// Loads from primary, then backup, else creates a new save. Applies integrity checks and migrations.
         /// </summary>
-        public void LoadOrCreate()
+        public void LoadOrCreate(ItemDatabase itemDatabase = null)
         {
             if (TryLoadFromStorage(primary: true, out var loaded))
             {
+                NormalizeSaveState(loaded, itemDatabase);
                 Data = loaded;
                 Loaded?.Invoke(Data);
                 return;
@@ -74,6 +76,7 @@ namespace IdleScaper.Persistence
 
             if (TryLoadFromStorage(primary: false, out loaded))
             {
+                NormalizeSaveState(loaded, itemDatabase);
                 Data = loaded;
                 ForceSave();
                 Loaded?.Invoke(Data);
@@ -81,9 +84,7 @@ namespace IdleScaper.Persistence
             }
 
             Data = CreateNew();
-            
-            Data.Inventory ??= new Inventory.InventoryState();
-            Data.Inventory.EnsureSize(100);
+            NormalizeSaveState(Data, itemDatabase);
             
             ForceSave();
             Loaded?.Invoke(Data);
@@ -225,6 +226,18 @@ namespace IdleScaper.Persistence
                 LastSavedUtcTicks = DateTime.UtcNow.Ticks,
                 Signature = null
             };
+        }
+
+        private static void NormalizeSaveState(SaveData data, ItemDatabase itemDatabase)
+        {
+            if (data == null)
+                return;
+
+            data.Inventory ??= new Inventory.InventoryState();
+            data.Inventory.EnsureSize(100);
+
+            data.Tools ??= new Tools.State.ToolCollectionState();
+            data.Tools.Normalize(itemDatabase);
         }
 
         private int GetLatestVersion()

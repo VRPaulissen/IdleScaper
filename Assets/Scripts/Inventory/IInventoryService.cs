@@ -22,6 +22,16 @@ namespace Inventory
         InventoryResult TryRemove(ItemId itemId, int quantity);
 
         /// <summary>
+        /// Returns the total quantity of the given item across all inventory slots.
+        /// </summary>
+        int GetQuantity(ItemId itemId);
+
+        /// <summary>
+        /// Returns true if the inventory contains at least the requested quantity of the given item.
+        /// </summary>
+        bool CanRemove(ItemId itemId, int quantity);
+
+        /// <summary>
         /// Attempts to move or merge items between two inventory slots.
         /// Intended for UI interactions (drag & drop).
         /// </summary>

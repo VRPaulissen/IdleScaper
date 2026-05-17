@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3af56cb6059f99d46849a155e3002da5, type: 3}
+  m_Name: Pickaxe Tool
+  m_EditorClassIdentifier: Assembly-CSharp::Tools.Definitions.ToolDefinition
+  id:
+    value: tool.pickaxe
+  displayName: Pickaxe
+  icon: {fileID: 0}
+  supportedSlots:
+  - {fileID: 11400000, guid: eda91f3b463743eba98b8fc566f1ccb7, type: 2}
+  - {fileID: 11400000, guid: 738365a986d74759ac897505a6534249, type: 2}
+  - {fileID: 11400000, guid: 17350337270447be8c6dbcee5c70cefd, type: 2}
+  - {fileID: 11400000, guid: 28df42d980ca489ab252cb1f05738b88, type: 2}
+  - {fileID: 11400000, guid: 0d25f9f3044042858d98d3028665fe93, type: 2}

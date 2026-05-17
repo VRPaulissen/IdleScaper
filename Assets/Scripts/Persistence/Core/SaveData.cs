@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Inventory;
+using Tools.State;
 
 namespace IdleScaper.Persistence.Core
 {
@@ -21,5 +22,8 @@ namespace IdleScaper.Persistence.Core
 
         /// <summary>Inventory state.</summary>
         public InventoryState Inventory = new InventoryState();
+
+        /// <summary>Permanent player tool state.</summary>
+        public ToolCollectionState Tools = new ToolCollectionState();
     }
 }

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using IdleScaper.Persistence;
 using IdleScaper.Persistence.Core;
 using IdleScaper.Persistence.Integrity;
+using Items.Runtime;
 using UnityEngine;
 
 namespace IdleScaper.Bootstrap
@@ -13,6 +14,7 @@ namespace IdleScaper.Bootstrap
     {
         [Header("Dependencies")]
         [SerializeField] private SaveAutosaveDriver autosaveDriver;
+        [SerializeField] private ItemDatabase itemDatabase;
 
         private SaveManager saveManager;
         private const string TEMP_SECRET = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -29,7 +31,7 @@ namespace IdleScaper.Bootstrap
             var migrations = new List<ISaveMigration>();
 
             saveManager = new SaveManager(storage, serializer, integrity, migrations);
-            saveManager.LoadOrCreate();
+            saveManager.LoadOrCreate(itemDatabase);
             autosaveDriver.Initialize(saveManager);
             autosaveDriver.ApplyOfflineProgress(GetIncomePerSecond);
             saveManager.SaveIfDirty();
