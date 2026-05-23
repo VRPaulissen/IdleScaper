@@ -53,6 +53,11 @@ namespace ResourceAreas.Runtime
         /// <summary>
         /// Additive multiplier bonus for resource sell value.
         /// </summary>
-        ResourceSellValueMultiplier
+        ResourceSellValueMultiplier,
+
+        /// <summary>
+        /// Marker bonus indicating a drop unlock key is active.
+        /// </summary>
+        DropUnlock
     }
 }

@@ -19,6 +19,18 @@ namespace ResourceAreas.Definitions
         /// <inheritdoc />
         public override void AddBonuses(ResourceBonusContext context, ResourceBonusCollection bonuses, ResourceBonusEffectSource source)
         {
+            if (bonuses == null)
+                return;
+
+            if (string.IsNullOrWhiteSpace(unlockKey))
+                return;
+
+            bonuses.Add(
+                ResourceBonusType.DropUnlock,
+                0f,
+                source.SourceName,
+                source.SourceType,
+                unlockKey);
         }
     }
 }
