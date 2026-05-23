@@ -52,5 +52,14 @@ namespace ResourceAreas.State
             level = Math.Max(1, level);
             xp = Math.Max(0f, xp);
         }
+
+        /// <summary>
+        /// Sets level and experience to normalized values.
+        /// </summary>
+        public void SetProgress(int level, float xp)
+        {
+            this.level = Math.Max(1, level);
+            this.xp = Math.Max(0f, xp);
+        }
     }
 }

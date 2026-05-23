@@ -61,6 +61,15 @@ namespace ResourceAreas.State
         }
 
         /// <summary>
+        /// Sets level and experience to normalized values.
+        /// </summary>
+        public void SetProgress(int level, float xp)
+        {
+            this.level = Math.Max(1, level);
+            this.xp = Math.Max(0f, xp);
+        }
+
+        /// <summary>
         /// Adds experience and applies simple level-up logic using the supplied requirement resolver.
         /// </summary>
         public void AddXp(float amount, Func<int, float> xpRequiredResolver)
