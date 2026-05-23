@@ -797,6 +797,20 @@ namespace Tests.EditMode
                 return itemId.IsValid && quantity > 0;
             }
 
+            public bool CanAddAll(IReadOnlyList<ItemInstance> items)
+            {
+                if (items == null)
+                    return true;
+
+                for (var i = 0; i < items.Count; i++)
+                {
+                    if (!items[i].ItemId.IsValid || items[i].Quantity <= 0)
+                        return false;
+                }
+
+                return true;
+            }
+
             public InventoryResult TryRemove(ItemId itemId, int quantity)
             {
                 if (!itemId.IsValid)

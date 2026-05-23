@@ -25,37 +25,36 @@ namespace Resource.Runtime
         [SerializeField, Min(0.1f)] private float respawnSeconds = 10f;
 
         private readonly ResourceRuntimeState state = new ResourceRuntimeState();
-        
+
         private ResourceInteractorCoordinator interactionCoordinator;
-        
         private ResourceInteractor interactor;
-        private IInventoryService inventoryService;
+        private ResourceRewardService rewardService;
         private IResourceToolProvider toolProvider;
 
         private Coroutine interactionRoutine;
         private bool isDepleted;
-        
+
         /// <summary>
         /// Raised when durability changes.
         /// </summary>
         public event Action<ResourceNode, int, int> DurabilityChanged;
-        
+
         /// <summary>
         /// Raised when a gathering hit applied damage.
         /// Provides roll details and the resulting durability state after the hit.
         /// </summary>
         public event Action<ResourceNode, GatheringDamageRoll> DamageApplied;
-        
+
         /// <summary>
         /// Raised when the node is depleted and rewards are rolled.
         /// </summary>
         public event Action<ResourceNode, IReadOnlyList<ItemInstance>> Depleted;
-        
+
         /// <summary>
         /// Raised when the depleted state changes.
         /// </summary>
         public event Action<ResourceNode, bool> DepletionStateChanged;
-        
+
         /// <summary>
         /// Raised when a respawn countdown starts.
         /// </summary>
@@ -65,7 +64,7 @@ namespace Resource.Runtime
         /// The linked definition of this resource node.
         /// </summary>
         public ResourceDefinition Definition => definition;
-        
+
         /// <summary>
         /// True if the node is currently depleted.
         /// </summary>
@@ -80,7 +79,7 @@ namespace Resource.Runtime
         /// Respawn delay in seconds.
         /// </summary>
         public float RespawnSeconds => respawnSeconds;
-        
+
         /// <summary>
         /// Current durability of the resource.
         /// </summary>
@@ -90,7 +89,7 @@ namespace Resource.Runtime
         /// Maximum durability of the resource.
         /// </summary>
         public int DurabilityMax => definition.DurabilityMax;
-        
+
         private void Awake()
         {
             if (definition == null)
@@ -108,23 +107,23 @@ namespace Resource.Runtime
         {
             if (interactionCoordinator != null)
                 interactionCoordinator.Unregister(this);
-            
+
             StopInteraction();
         }
-        
+
         /// <summary>
         /// Injects runtime dependencies for rewards and tool selection.
         /// </summary>
         public void Initialize(
-            IInventoryService inventory, 
-            IResourceToolProvider resourceToolProvider, 
+            IInventoryService inventory,
+            IResourceToolProvider resourceToolProvider,
             ResourceInteractorCoordinator coordinator)
         {
-            inventoryService = inventory;
+            rewardService = inventory != null ? new ResourceRewardService(inventory) : null;
             toolProvider = resourceToolProvider;
             interactionCoordinator = coordinator;
         }
-            
+
         /// <summary>
         /// Handles pointer click to start interaction.
         /// </summary>
@@ -143,7 +142,7 @@ namespace Resource.Runtime
         }
 
         #region Interaction
-        
+
         /// <summary>
         /// Starts the interaction loop if possible.
         /// </summary>
@@ -175,7 +174,7 @@ namespace Resource.Runtime
             StopCoroutine(interactionRoutine);
             interactionRoutine = null;
         }
-        
+
         private IEnumerator InteractionLoop()
         {
             while (!isDepleted)
@@ -200,9 +199,9 @@ namespace Resource.Runtime
 
                 if (damageRoll.FinalDamage > 0)
                     DamageApplied?.Invoke(this, damageRoll);
-                
+
                 DurabilityChanged?.Invoke(this, state.DurabilityCurrent, definition.DurabilityMax);
-                
+
                 if (!wasDepleted)
                     continue;
 
@@ -220,7 +219,7 @@ namespace Resource.Runtime
 
             Depleted?.Invoke(this, drops);
             DepletionStateChanged?.Invoke(this, isDepleted);
-            
+
             if (!respawns)
                 return;
 
@@ -237,40 +236,58 @@ namespace Resource.Runtime
                     $"{nameof(ResourceNode)} {nodeLabel} depleted. " +
                     $"Rolling <color=#FFD54F>{drops.Count}</color> drop(s).");
 
-                for (var i = 0; i < drops.Count; i++)
-                {
-                    var drop = drops[i];
-                    var add = inventoryService.TryAdd(drop.ItemId, drop.Quantity);
-
-                    if (add.IsSuccess)
-                    {
-                        Logger.Log(
-                            $"  <color=#81C784>+ {drop.Quantity}x {drop.ItemId}</color>");
-                        continue;
-                    }
-
-                    var addedQuantity = drop.Quantity - add.UnprocessedQuantity;
-
-                    Logger.LogWarning(
-                        $"  <color=#FFB74D>± {drop.ItemId}</color> " +
-                        $"Requested={drop.Quantity}, " +
-                        $"Added={addedQuantity}, " +
-                        $"NotAdded={add.UnprocessedQuantity} " +
-                        $"(<i>{add.Code}</i>: {add.Message})");
-                }
+                AwardDrops(drops);
+                return;
             }
-            else
+
+            Logger.Log(
+                $"{nameof(ResourceNode)} {nodeLabel} depleted. " +
+                "<color=#B0BEC5>No drops rolled.</color>");
+        }
+
+        private void AwardDrops(IReadOnlyList<ItemInstance> drops)
+        {
+            if (rewardService == null)
             {
-                Logger.Log(
-                    $"{nameof(ResourceNode)} {nodeLabel} depleted. " +
-                    $"<color=#B0BEC5>No drops rolled.</color>"); // grey
+                Logger.LogWarning("  Resource rewards could not be awarded because no inventory service was assigned.");
+                return;
+            }
+
+            var result = rewardService.TryAward(drops);
+            if (result.IsSuccess)
+            {
+                LogAwardedDrops(result.AwardedDrops);
+                return;
+            }
+
+            LogRewardFailure(result);
+        }
+
+        private static void LogAwardedDrops(IReadOnlyList<ItemInstance> drops)
+        {
+            for (var i = 0; i < drops.Count; i++)
+            {
+                var drop = drops[i];
+                Logger.Log($"  <color=#81C784>+ {drop.Quantity}x {drop.ItemId}</color>");
+            }
+        }
+
+        private static void LogRewardFailure(ResourceRewardResult result)
+        {
+            Logger.LogWarning($"  Resource rewards were not awarded: {result.Reason}. {result.Message}");
+
+            var failedDrops = result.FailedDrops;
+            for (var i = 0; i < failedDrops.Count; i++)
+            {
+                var drop = failedDrops[i];
+                Logger.LogWarning($"  <color=#FFB74D>Not awarded:</color> {drop.Quantity}x {drop.ItemId}");
             }
         }
 
         private IEnumerator RespawnAfterDelay()
         {
             RespawnStarted?.Invoke(this, respawnSeconds);
-            
+
             yield return new WaitForSeconds(respawnSeconds);
 
             isDepleted = false;
@@ -278,7 +295,7 @@ namespace Resource.Runtime
             DurabilityChanged?.Invoke(this, state.DurabilityCurrent, definition.DurabilityMax);
             DepletionStateChanged?.Invoke(this, isDepleted);
         }
-        
+
         #endregion
     }
 }

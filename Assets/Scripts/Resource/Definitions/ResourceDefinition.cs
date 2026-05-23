@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Items.Runtime;
+using Items.Runtime.Diagnostics;
 using UnityEngine;
 using Utilities.Calculations;
 
@@ -50,6 +51,35 @@ namespace Resource.Definitions
         /// Base damage applied per hit before player/tool modifiers.
         /// </summary>
         public int BaseDamagePerHit => baseDamagePerHit;
+
+        /// <summary>
+        /// Appends non-mutating diagnostics for this resource definition.
+        /// </summary>
+        public void CollectDiagnostics(List<ItemDiagnostic> results, ItemDatabase itemDatabase = null)
+        {
+            if (results == null)
+                return;
+
+            if (string.IsNullOrWhiteSpace(name))
+                results.Add(ItemDiagnostic.Warning("RESOURCE_NAME_MISSING", "ResourceDefinition has no asset name.", this));
+
+            if (aliveSprite == null)
+                results.Add(ItemDiagnostic.Warning("RESOURCE_ALIVE_SPRITE_MISSING", $"Resource '{name}' has no alive sprite.", this));
+
+            if (depletedSprite == null)
+                results.Add(ItemDiagnostic.Warning("RESOURCE_DEPLETED_SPRITE_MISSING", $"Resource '{name}' has no depleted sprite.", this));
+
+            if (durabilityMax <= 0)
+                results.Add(ItemDiagnostic.Error("RESOURCE_DURABILITY_INVALID", $"Resource '{name}' has max durability <= 0.", this));
+
+            if (hitIntervalSeconds <= 0f)
+                results.Add(ItemDiagnostic.Error("RESOURCE_HIT_INTERVAL_INVALID", $"Resource '{name}' has hit interval <= 0.", this));
+
+            if (baseDamagePerHit <= 0)
+                results.Add(ItemDiagnostic.Error("RESOURCE_BASE_DAMAGE_INVALID", $"Resource '{name}' has base damage <= 0.", this));
+
+            CollectDropDiagnostics(results, itemDatabase);
+        }
         
         /// <summary>
         /// Rolls the table and returns the resulting drops.
@@ -66,6 +96,27 @@ namespace Resource.Definitions
             {
                 if (entries[i].TryRoll(random, out var item))
                     resultsBuffer.Add(item);
+            }
+        }
+
+        private void CollectDropDiagnostics(List<ItemDiagnostic> results, ItemDatabase itemDatabase)
+        {
+            if (entries == null)
+            {
+                results.Add(ItemDiagnostic.Warning("RESOURCE_DROPS_NULL", $"Resource '{name}' has a null drop list.", this));
+                return;
+            }
+
+            var itemIds = new HashSet<ItemId>();
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                entry.CollectDiagnostics(results, this, name, i, itemDatabase);
+                if (!entry.TryGetItemId(out var itemId))
+                    continue;
+
+                if (!itemIds.Add(itemId))
+                    results.Add(ItemDiagnostic.Warning("RESOURCE_DROP_DUPLICATE_ITEM", $"Resource '{name}' has duplicate drop item '{itemId}'.", this, itemId));
             }
         }
     }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Items.Runtime;
 
 namespace Inventory
@@ -19,6 +20,11 @@ namespace Inventory
         /// Returns true if the inventory can fit the requested item quantity without mutating state.
         /// </summary>
         bool CanAdd(ItemId itemId, int quantity);
+
+        /// <summary>
+        /// Returns true if the inventory can fit every item stack without mutating state.
+        /// </summary>
+        bool CanAddAll(IReadOnlyList<ItemInstance> items);
 
         /// <summary>
         /// Attempts to remove the given item and quantity from the inventory.

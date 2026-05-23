@@ -1,5 +1,6 @@
 using System;
-using Resource.Runtime;
+using System.Collections.Generic;
+using Items.Runtime.Diagnostics;
 using UnityEngine;
 using Utilities.Calculations;
 
@@ -37,6 +38,25 @@ namespace Resource.Definitions
         /// Returns true if this chance represents a guaranteed success.
         /// </summary>
         public bool IsGuaranteed => numerator >= denominator;
+
+        /// <summary>
+        /// Appends non-mutating diagnostics for this chance value.
+        /// </summary>
+        public void CollectDiagnostics(
+            List<ItemDiagnostic> results,
+            UnityEngine.Object context,
+            string ownerLabel,
+            string codePrefix)
+        {
+            if (results == null)
+                return;
+
+            if (numerator < 0)
+                results.Add(ItemDiagnostic.Error($"{codePrefix}_NUMERATOR_INVALID", $"{ownerLabel} has a negative drop chance numerator.", context));
+
+            if (denominator <= 0)
+                results.Add(ItemDiagnostic.Error($"{codePrefix}_DENOMINATOR_INVALID", $"{ownerLabel} has a drop chance denominator <= 0.", context));
+        }
 
         /// <summary>
         /// Evaluates the chance using an RNG.

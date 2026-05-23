@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Equipment;
+using IdleScaper.Bootstrap;
 using Inventory;
 using Items.Definitions;
 using Items.Runtime;
@@ -22,8 +23,13 @@ namespace Resource.Runtime
 
         [Header("Dependencies")]
         [SerializeField] private ResourceInteractorCoordinator interactionCoordinator;
+        [SerializeField] private SaveBootstrap saveBootstrap;
         [SerializeField] private ItemDatabase itemDatabase;
-        [SerializeField] private ItemDefinition axeDefinition;
+        [SerializeField, Min(1)] private int inventorySlotCount = 100;
+
+        [Header("Prototype Tool Provider")]
+        [SerializeField] private bool usePrototypeAxeProvider;
+        [SerializeField] private ItemDefinition prototypeAxeDefinition;
         
         [Header("Spawn")]
         [SerializeField] private RectTransform spawnContainer;
@@ -47,6 +53,21 @@ namespace Resource.Runtime
             }
 
             Spawn();
+        }
+
+        /// <summary>
+        /// Injects runtime services before spawning.
+        /// </summary>
+        public void Initialize(
+            IInventoryService inventory,
+            IResourceToolProvider resourceToolProvider,
+            ResourceInteractorCoordinator coordinator = null)
+        {
+            inventoryService = inventory;
+            toolProvider = resourceToolProvider;
+
+            if (coordinator != null)
+                interactionCoordinator = coordinator;
         }
 
         /// <summary>
@@ -133,7 +154,7 @@ namespace Resource.Runtime
             List<Vector2> existing,
             out Vector2 anchoredPosition)
         {
-            // RectTransform.rect is in the container’s local space (anchoredPosition space)
+            // RectTransform.rect is in the container's local space (anchoredPosition space)
             var rect = container.rect;
 
             var min = rect.min + paddingPixels;
@@ -172,25 +193,17 @@ namespace Resource.Runtime
         {
             try
             {
-                inventoryService = new InventoryService(itemDatabase, new InventoryState(), 100);
-                equipmentService = new EquipmentService(itemDatabase, new EquipmentState());
+                if (inventoryService == null && !TryResolveInventoryService())
+                    return false;
 
-                var equip = equipmentService.TryEquipFromExternal(inventoryService, axeDefinition);
-                if (!equip.IsSuccess)
-                {
-                    Logger.LogError(
-                        $"Failed to equip axe. " +
-                        $"Code={equip.Code} Slot={equip.SlotId} Item={equip.ItemId} Message='{equip.Message}'");
-                }
+                if (toolProvider == null && !TryResolveToolProvider())
+                    return false;
 
-                toolProvider = new SlotToolProvider(equipmentService, itemDatabase, EquipmentSlotId.Axe);
-
-                // Confirm provider can resolve an active tool.
                 if (!toolProvider.TryGetActiveTool(out var tool))
                 {
                     Logger.LogWarning(
-                        $"ToolProvider could not resolve an active Axe tool. " +
-                        $"Ensure the equipped Axe item has both EquipmentModule(slot=Axe) and GatheringToolModule.");
+                        $"ToolProvider could not resolve an active tool. " +
+                        $"Ensure a resource tool provider is injected or enable the prototype Axe provider.");
                 }
 
                 return true;
@@ -200,6 +213,68 @@ namespace Resource.Runtime
                 Logger.LogError($"Exception while resolving dependencies: {ex}");
                 return false;
             }
+        }
+
+        private bool TryResolveInventoryService()
+        {
+            if (itemDatabase == null)
+            {
+                Logger.LogError($"{nameof(ResourceNodeSpawner)} missing ItemDatabase.");
+                return false;
+            }
+
+            if (saveBootstrap == null)
+            {
+                Logger.LogError($"{nameof(ResourceNodeSpawner)} missing SaveBootstrap. Resource rewards require the saved player inventory.");
+                return false;
+            }
+
+            var saveData = saveBootstrap.GetSaveData();
+            if (saveData == null)
+            {
+                Logger.LogError($"{nameof(ResourceNodeSpawner)} could not resolve save data.");
+                return false;
+            }
+
+            saveData.Inventory ??= new InventoryState();
+            saveData.Inventory.EnsureSize(inventorySlotCount);
+            inventoryService = new InventoryService(itemDatabase, saveData.Inventory, inventorySlotCount);
+            inventoryService.InventoryChanged += saveBootstrap.MarkSaveDirty;
+            return true;
+        }
+
+        private bool TryResolveToolProvider()
+        {
+            if (!usePrototypeAxeProvider)
+            {
+                Logger.LogError($"{nameof(ResourceNodeSpawner)} has no resource tool provider. Inject one or enable the explicit prototype Axe provider.");
+                return false;
+            }
+
+            if (itemDatabase == null)
+            {
+                Logger.LogError($"{nameof(ResourceNodeSpawner)} missing ItemDatabase.");
+                return false;
+            }
+
+            if (prototypeAxeDefinition == null)
+            {
+                Logger.LogError($"{nameof(ResourceNodeSpawner)} prototype Axe provider is enabled but no Axe definition is assigned.");
+                return false;
+            }
+
+            equipmentService = new EquipmentService(itemDatabase, new EquipmentState());
+            var equip = equipmentService.TryEquipFromExternal(inventoryService, prototypeAxeDefinition);
+            if (!equip.IsSuccess)
+            {
+                Logger.LogError(
+                    $"Failed to equip prototype axe. " +
+                    $"Code={equip.Code} Slot={equip.SlotId} Item={equip.ItemId} Message='{equip.Message}'");
+                return false;
+            }
+
+            toolProvider = new SlotToolProvider(equipmentService, itemDatabase, EquipmentSlotId.Axe);
+            return true;
         }
     }
 }

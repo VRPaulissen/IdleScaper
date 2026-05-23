@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace IdleScaper.Persistence
 {
-/// <summary>
+    /// <summary>
     /// Mobile-friendly autosave driver: saves on pause/focus loss and on interval when dirty.
     /// </summary>
     public sealed class SaveAutosaveDriver : MonoBehaviour

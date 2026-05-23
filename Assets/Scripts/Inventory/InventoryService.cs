@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Items.Definitions;
 using Items.Runtime;
 using UnityEngine;
@@ -82,6 +83,29 @@ namespace Inventory
                 return false;
 
             return CanFitQuantity(itemId, quantity, def);
+        }
+
+        /// <inheritdoc />
+        public bool CanAddAll(IReadOnlyList<ItemInstance> items)
+        {
+            if (items == null)
+                return true;
+
+            var simulatedSlots = new List<InventorySlotData>(state.Slots);
+            for (var i = 0; i < items.Count; i++)
+            {
+                var item = items[i];
+                if (!item.ItemId.IsValid || item.Quantity <= 0)
+                    return false;
+
+                if (!itemDatabase.TryGetItem(item.ItemId, out var def) || def == null)
+                    return false;
+
+                if (!TryFitIntoSlots(simulatedSlots, item.ItemId, item.Quantity, def))
+                    return false;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -303,6 +327,72 @@ namespace Inventory
             }
 
             return false;
+        }
+
+        private static bool TryFitIntoSlots(
+            List<InventorySlotData> slots,
+            ItemId itemId,
+            int quantity,
+            ItemDefinition def)
+        {
+            var remaining = quantity;
+
+            if (def.Stackable)
+                remaining = FitExistingStacks(slots, itemId, remaining, def.MaxStackSize);
+
+            remaining = FitEmptySlots(slots, itemId, remaining, def.Stackable ? def.MaxStackSize : 1);
+            return remaining == 0;
+        }
+
+        private static int FitExistingStacks(
+            List<InventorySlotData> slots,
+            ItemId itemId,
+            int remaining,
+            int maxStack)
+        {
+            for (var i = 0; i < slots.Count; i++)
+            {
+                var slot = slots[i];
+                if (!slot.HasItem || slot.ItemId != itemId)
+                    continue;
+
+                if (slot.Quantity >= maxStack)
+                    continue;
+
+                var add = Mathf.Min(maxStack - slot.Quantity, remaining);
+                slot.Set(slot.ItemId, slot.Quantity + add);
+                slots[i] = slot;
+
+                remaining -= add;
+                if (remaining == 0)
+                    return 0;
+            }
+
+            return remaining;
+        }
+
+        private static int FitEmptySlots(
+            List<InventorySlotData> slots,
+            ItemId itemId,
+            int remaining,
+            int perSlotMax)
+        {
+            for (var i = 0; i < slots.Count; i++)
+            {
+                var slot = slots[i];
+                if (slot.HasItem)
+                    continue;
+
+                var add = Mathf.Min(perSlotMax, remaining);
+                slot.Set(itemId, add);
+                slots[i] = slot;
+
+                remaining -= add;
+                if (remaining == 0)
+                    return 0;
+            }
+
+            return remaining;
         }
 
         private static bool IsValidIndex(int index, int count)
