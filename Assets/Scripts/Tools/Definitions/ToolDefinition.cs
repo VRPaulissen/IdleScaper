@@ -48,9 +48,8 @@ namespace Tools.Definitions
             if (!slotId.IsValid)
                 return false;
 
-            for (var i = 0; i < supportedSlots.Count; i++)
+            foreach (var slot in supportedSlots)
             {
-                var slot = supportedSlots[i];
                 if (slot == null)
                     continue;
 
@@ -69,9 +68,8 @@ namespace Tools.Definitions
             if (!slotId.IsValid)
                 return null;
 
-            for (var i = 0; i < supportedSlots.Count; i++)
+            foreach (var slot in supportedSlots)
             {
-                var slot = supportedSlots[i];
                 if (slot == null)
                     continue;
 
