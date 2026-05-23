@@ -27,24 +27,29 @@ MonoBehaviour:
     unlockType: 0
     resource: {fileID: 11400000, guid: 1d5c23d96ba5464f9c39bc9337110a11, type: 2}
     unlockKey: 
+    effects: []
   - requiredLevel: 5
     displayName: Tin Ore
     icon: {fileID: 0}
     unlockType: 0
     resource: {fileID: 11400000, guid: 6a461a2fe2774a9990100cc83f3da8c2, type: 2}
     unlockKey: 
+    effects: []
   - requiredLevel: 10
     displayName: 5% Gem Find Chance
     icon: {fileID: 0}
     unlockType: 1
     resource: {fileID: 0}
     unlockKey: bavaro_mine.gem_find_chance_5
+    effects:
+    - {fileID: 11400000, guid: c5c996cc39cd4622a15fa4aa192819ff, type: 2}
   - requiredLevel: 20
     displayName: Mine Mastery
     icon: {fileID: 0}
     unlockType: 3
     resource: {fileID: 0}
     unlockKey: bavaro_mine.mastery
+    effects: []
   resourceSpawns:
   - resource: {fileID: 11400000, guid: 1d5c23d96ba5464f9c39bc9337110a11, type: 2}
     requiredAreaLevel: 1

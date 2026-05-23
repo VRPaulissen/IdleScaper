@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ResourceAreas.Definitions
@@ -14,6 +15,7 @@ namespace ResourceAreas.Definitions
         [SerializeField] private string description;
         [SerializeField] private Sprite icon;
         [SerializeField] private string unlockKey;
+        [SerializeField] private List<ResourceBonusEffectDefinition> effects = new List<ResourceBonusEffectDefinition>();
 
         /// <summary>
         /// Required resource level for this upgrade level.
@@ -41,11 +43,17 @@ namespace ResourceAreas.Definitions
         public string UnlockKey => unlockKey;
 
         /// <summary>
+        /// Bonus effects applied when this upgrade level is completed.
+        /// </summary>
+        public IReadOnlyList<ResourceBonusEffectDefinition> Effects => effects;
+
+        /// <summary>
         /// Clamps this definition to valid serialized values.
         /// </summary>
         public void Normalize()
         {
             requiredLevel = Math.Max(1, requiredLevel);
+            effects ??= new List<ResourceBonusEffectDefinition>();
         }
     }
 }

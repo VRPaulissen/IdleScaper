@@ -54,18 +54,26 @@ MonoBehaviour:
     description: 
     icon: {fileID: 0}
     unlockKey: 
+    effects:
+    - {fileID: 11400000, guid: daeff720230c4a24a85f6f4dce336b2c, type: 2}
   - requiredLevel: 3
     displayName: +15% Tin XP
     description: 
     icon: {fileID: 0}
     unlockKey: 
+    effects:
+    - {fileID: 11400000, guid: be1b9e0eb0b449d5875a718b4399feaa, type: 2}
   - requiredLevel: 4
     displayName: +20% Tin Yield
     description: 
     icon: {fileID: 0}
     unlockKey: 
+    effects:
+    - {fileID: 11400000, guid: 8208ac671f6346b1bc29daa5a48d179a, type: 2}
   - requiredLevel: 5
     displayName: +2% Rough Gem Chance
     description: 
     icon: {fileID: 0}
     unlockKey: 
+    effects:
+    - {fileID: 11400000, guid: bbf9f1f0a81d4a8d9ba6d1c3ee050540, type: 2}

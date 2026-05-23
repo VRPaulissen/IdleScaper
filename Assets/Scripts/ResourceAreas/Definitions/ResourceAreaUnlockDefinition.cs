@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using ResourceAreas.Runtime;
 using UnityEngine;
 
@@ -16,6 +17,7 @@ namespace ResourceAreas.Definitions
         [SerializeField] private ResourceAreaUnlockType unlockType;
         [SerializeField] private ResourceDefinition resource;
         [SerializeField] private string unlockKey;
+        [SerializeField] private List<ResourceBonusEffectDefinition> effects = new List<ResourceBonusEffectDefinition>();
 
         /// <summary>
         /// Required resource area level for this unlock.
@@ -53,11 +55,17 @@ namespace ResourceAreas.Definitions
         public string UnlockKey => unlockKey;
 
         /// <summary>
+        /// Bonus effects applied when this unlock is completed.
+        /// </summary>
+        public IReadOnlyList<ResourceBonusEffectDefinition> Effects => effects;
+
+        /// <summary>
         /// Clamps this definition to valid serialized values.
         /// </summary>
         public void Normalize()
         {
             requiredLevel = Math.Max(1, requiredLevel);
+            effects ??= new List<ResourceBonusEffectDefinition>();
         }
     }
 }
