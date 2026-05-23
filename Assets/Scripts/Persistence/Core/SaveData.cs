@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Inventory;
+using ResourceAreas.State;
 using Tools.State;
 
 namespace IdleScaper.Persistence.Core
@@ -25,5 +26,8 @@ namespace IdleScaper.Persistence.Core
 
         /// <summary>Permanent player tool state.</summary>
         public ToolCollectionState Tools = new ToolCollectionState();
+
+        /// <summary>Global resource boost state.</summary>
+        public GlobalBoostCollectionState GlobalBoosts = new GlobalBoostCollectionState();
     }
 }
